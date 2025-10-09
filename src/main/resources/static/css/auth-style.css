@@ -1,0 +1,266 @@
+
+    /* فونت فارسی و ریست کلی */
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+
+    /* ریست کلی */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Vazirmatn', sans-serif;
+    }
+
+    /* استایل بدنه */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #000;
+      direction: rtl;
+    }
+
+    /* استایل بخش اصلی */
+    section {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      flex-wrap: wrap;
+      overflow: hidden;
+    }
+
+    /* افکت گرادیان متحرک */
+    section::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(#000, #4a90e2, #000);
+      animation: animate 5s linear infinite;
+    }
+
+    /* فریم‌های انیمیشن */
+    @keyframes animate {
+      0% {
+        transform: translateY(-100%);
+      }
+      100% {
+        transform: translateY(100%);
+      }
+    }
+
+    /* استایل المان‌های span */
+    section span {
+      position: relative;
+      display: block;
+      width: calc(6.25vw - 2px);
+      height: calc(6.25vw - 2px);
+      background: #181818;
+      z-index: 2;
+      transition: 1.5s;
+    }
+
+    section span:hover {
+      background: #4a90e2;
+      transition: 0s;
+    }
+
+    /* استایل فرم ورود */
+    .signin {
+      position: absolute;
+      width: 400px;
+      background: #222;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      border-radius: 4px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
+    }
+
+    /* محتوای فرم */
+    .signin .content {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .signin .content h2 {
+      font-size: 2em;
+      color: #4a90e2;
+      text-transform: uppercase;
+    }
+
+    /* استایل فرم */
+    .signin .content .form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    /* استایل باکس ورودی */
+    .signin .content .form .inputBox {
+      position: relative;
+      width: 100%;
+    }
+
+    /* استایل فیلدهای ورودی */
+    .signin .content .form .inputBox input {
+      position: relative;
+      width: 100%;
+      background: #333;
+      border: none;
+      outline: none;
+      padding: 25px 10px 7.5px;
+      border-radius: 4px;
+      color: #fff;
+      font-weight: 500;
+      font-size: 1em;
+    }
+
+    /* استایل برچسب‌های ورودی */
+    .signin .content .form .inputBox i {
+      position: absolute;
+      right: 0;
+      padding: 15px 10px;
+      font-style: normal;
+      color: #aaa;
+      transition: 0.5s;
+      pointer-events: none;
+    }
+
+    /* انیمیشن برچسب‌ها هنگام فوکوس */
+    .signin .content .form .inputBox input:focus ~ i,
+    .signin .content .form .inputBox input:valid ~ i {
+      transform: translateY(-7.5px);
+      font-size: 0.8em;
+      color: #fff;
+    }
+
+    /* استایل لینک‌ها */
+    .signin .content .form .links {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .links p {
+      color: white;
+    }
+
+    /* استایل لینک‌های فرم */
+    .signin .content .form .links a {
+      color: #fff;
+      text-decoration: none;
+    }
+
+    /* استایل لینک ثبت نام */
+    .signin .content .form .links a:nth-child(2) {
+      color: #4a90e2;
+      font-weight: 600;
+    }
+
+    /* استایل دکمه ورود */
+    .signin .content .form .inputBox input[type="submit"] {
+      padding: 10px;
+      background: #4a90e2;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.35em;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    /* افکت کلیک دکمه */
+    input[type="submit"]:active {
+      opacity: 0.6;
+    }
+
+    /* کوئری‌های رسپانسیو */
+    @media (max-width: 900px) {
+      section span {
+        width: calc(10vw - 2px);
+        height: calc(10vw - 2px);
+      }
+      
+      .signin {
+        width: 350px;
+        padding: 30px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      section span {
+        width: calc(20vw - 2px);
+        height: calc(20vw - 2px);
+      }
+      
+      .signin {
+        width: 300px;
+        padding: 20px;
+      }
+      
+      .signin .content h2 {
+        font-size: 1.5em;
+      }
+    }
+
+    .alert {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #ff2929;
+        display: none;
+        background-color: #ffe3e5;
+        color: #ff6773;
+    }
+
+    .active {
+        display: block !important;
+    }
+
+    /* برای ردیف checkbox و متن */
+    .checkBox {
+        display: flex;
+        align-items: center; /* تراز عمودی */
+        gap: 8px; /* فاصله بین چک‌باکس و متن */
+        margin: 0; /* حذف فاصله بالا و پایین */
+        padding: 0; /* حذف فاصله داخلی */
+    }
+
+    /* رنگ متن */
+    .checkBox label {
+        color: #fff; /* سفید */
+        font-size: 15px;
+        cursor: pointer;
+        user-select: none; /* جلوگیری از انتخاب تصادفی متن */
+    }
+
+    /* ظاهر خود چک‌باکس */
+    .checkBox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #444; /* رنگ دارک برای چک‌باکس در مرورگرهای مدرن */
+        cursor: pointer;
+        margin: 0; /* حذف فاصله پیش‌فرض مرورگر */
+    }
+
+    /* حالت hover برای حس بهتر */
+    .checkBox input[type="checkbox"]:hover {
+        accent-color: #666;
+    }
+
+
+
+
