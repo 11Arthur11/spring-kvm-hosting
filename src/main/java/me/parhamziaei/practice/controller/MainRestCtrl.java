@@ -8,11 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MainRestCtrl {
 
-    @GetMapping("/404")
-    public ResponseEntity<String> notFound() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("NOT_FOUND");
-    }
-
     @GetMapping("/favicon.ico")
     private void noFavicon() {
         System.out.println("favicon.ico is not configured!");

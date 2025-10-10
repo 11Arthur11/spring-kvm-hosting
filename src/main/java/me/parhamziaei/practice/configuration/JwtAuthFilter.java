@@ -30,13 +30,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final UserService userService;
     private final static String[] skipJwtAuthFilterURI =  {
             "/favicon.ico",
-            ".css",
-            ".js",
             "/api/login",
             "/auth/login",
             "/api/logout",
             "/auth/register",
-            "/404"
     };
 
     @Override
@@ -113,7 +110,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
         if (currentAuth == null || currentAuth instanceof AnonymousAuthenticationToken) {
-            response.sendRedirect("/auth/login");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
             return;
         }
 
