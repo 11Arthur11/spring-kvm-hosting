@@ -1,11 +1,11 @@
 package me.parhamziaei.practice.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -15,6 +15,9 @@ import java.util.Set;
 @Table(name = "users")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User implements UserDetails {
 
     @Id
@@ -30,6 +33,9 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 80, name = "password")
     private String password;
 
+    @OneToOne(mappedBy = "owner", cascade = CascadeType.ALL)
+    private Wallet wallet;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
@@ -37,12 +43,6 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles;
-
-    @Column(length = 20, name = "provider")
-    private String provider;
-
-    @Column(name = "provider_id")
-    private String providerId;
 
     @Column(columnDefinition = "TIMESTAMP(0)", name = "last_login")
     private LocalDateTime lastLogin;
@@ -54,16 +54,16 @@ public class User implements UserDetails {
     private LocalDateTime updatedAt;
 
     @Column(name = "enabled")
-    private boolean enabled;
+    private boolean enabled = true;
 
     @Column(name = "expired")
-    private boolean expired;
+    private boolean expired = false;
 
     @Column(name = "locked")
-    private boolean locked;
+    private boolean locked = false;
 
     @Column(name = "credentials_expired")
-    private boolean credentialsExpired;
+    private boolean credentialsExpired = false;
 
     @PrePersist
     public void onCreate() {
@@ -74,6 +74,11 @@ public class User implements UserDetails {
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now().withNano(0);
+    }
+
+    public void setWallet(Wallet wallet) {
+        this.wallet = wallet;
+        wallet.setOwner(this);
     }
 
     @Override

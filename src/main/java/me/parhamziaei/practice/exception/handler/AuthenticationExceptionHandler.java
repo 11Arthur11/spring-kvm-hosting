@@ -1,7 +1,6 @@
 package me.parhamziaei.practice.exception.handler;
 
-import me.parhamziaei.practice.dto.response.ApiResponse;
-import me.parhamziaei.practice.exception.custom.AlreadyLoggedInException;
+import me.parhamziaei.practice.exception.custom.authenticate.AlreadyLoggedInException;
 import me.parhamziaei.practice.util.ResponseBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

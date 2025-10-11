@@ -7,6 +7,9 @@ import me.parhamziaei.practice.dto.request.LoginRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
 import me.parhamziaei.practice.entity.Role;
 import me.parhamziaei.practice.entity.User;
+import me.parhamziaei.practice.entity.Wallet;
+import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenException;
+import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
 import me.parhamziaei.practice.repository.RoleRepo;
 import me.parhamziaei.practice.repository.UserRepo;
 import org.springframework.security.authentication.*;
@@ -32,7 +35,6 @@ public class UserService implements UserDetailsService {
     private final RoleRepo roleRepo;
     private final PasswordEncoder passwordEncoder;
 
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserDetails user = userRepo.findByEmail(username);
@@ -47,23 +49,22 @@ public class UserService implements UserDetailsService {
     }
 
     public User register(RegisterRequest registerRequest) throws IllegalArgumentException {
-
         if (!isEmailValid(registerRequest.getEmail())) {
-            throw new IllegalArgumentException("email already taken");
+            throw new EmailAlreadyTakenException();
         }
         if (!registerRequest.getRawPassword().equals(registerRequest.getRawPasswordConfirm())) {
-            throw new IllegalArgumentException("passwords does not match");
+            throw new PasswordPolicyException("PASSWORDS_DONT_MATCH");
         }
+
         Role role = roleRepo.findByName("ROLE_USER");
-        User user = new User();
-        user.setFullName(registerRequest.getFullName().trim().toLowerCase());
-        user.setEmail(registerRequest.getEmail().trim().toLowerCase());
-        user.setPassword(passwordEncoder.encode(registerRequest.getRawPassword()));
-        user.setEnabled(true);
-        user.setLocked(false);
-        user.setCredentialsExpired(false);
-        user.setProvider("Local");
-        user.setRoles(Set.of(role));
+        Wallet wallet = new Wallet();
+        User user = User.builder()
+                .fullName(registerRequest.getFullName().trim().toLowerCase())
+                .email(registerRequest.getEmail().trim().toLowerCase())
+                .password(passwordEncoder.encode(registerRequest.getRawPassword()))
+                .roles(Set.of(role))
+                .wallet(wallet)
+                .build();
         userRepo.save(user);
         return user;
     }
