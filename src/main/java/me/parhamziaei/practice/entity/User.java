@@ -36,6 +36,9 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "owner", cascade = CascadeType.ALL)
     private Wallet wallet;
 
+    @Column(name = "2fa_enabled")
+    private boolean twoFAEnabled;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
