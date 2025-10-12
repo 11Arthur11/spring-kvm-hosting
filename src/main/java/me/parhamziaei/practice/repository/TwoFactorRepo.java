@@ -3,7 +3,6 @@ package me.parhamziaei.practice.repository;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.entity.TwoFactorSession;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;

@@ -6,7 +6,6 @@ import me.parhamziaei.practice.entity.Role;
 import me.parhamziaei.practice.repository.RoleRepo;
 import me.parhamziaei.practice.service.UserService;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;

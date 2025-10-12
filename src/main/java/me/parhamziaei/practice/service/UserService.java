@@ -1,9 +1,6 @@
 package me.parhamziaei.practice.service;
 
-import jakarta.servlet.http.Cookie;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.dto.request.LoginRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
 import me.parhamziaei.practice.entity.Role;
 import me.parhamziaei.practice.entity.User;
@@ -13,19 +10,13 @@ import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenEx
 import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
 import me.parhamziaei.practice.repository.RoleRepo;
 import me.parhamziaei.practice.repository.UserRepo;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Set;
 
 @Service
