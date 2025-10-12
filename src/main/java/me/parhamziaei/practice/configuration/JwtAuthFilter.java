@@ -33,7 +33,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/login",
             "/auth/login",
             "/api/logout",
-            "/auth/register",
+            "/api/2fa-verify",
     };
 
     @Override
@@ -77,7 +77,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 UserDetails user = userService.loadUserByUsername(userEmail);
                 String refreshToken = jwtService.extractRefreshTokenFromRequest(request);
 
-                if (jwtService.isTokenValid(jwt, user)) {
+                if (jwtService.isTokenValid(jwt)) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     user, null, user.getAuthorities()

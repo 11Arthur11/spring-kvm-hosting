@@ -7,6 +7,7 @@ import me.parhamziaei.practice.dto.request.LoginRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
 import me.parhamziaei.practice.entity.Role;
 import me.parhamziaei.practice.entity.User;
+import me.parhamziaei.practice.entity.UserSetting;
 import me.parhamziaei.practice.entity.Wallet;
 import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenException;
 import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
@@ -58,15 +59,28 @@ public class UserService implements UserDetailsService {
 
         Role role = roleRepo.findByName("ROLE_USER");
         Wallet wallet = new Wallet();
+        UserSetting userSetting = new UserSetting();
         User user = User.builder()
                 .fullName(registerRequest.getFullName().trim().toLowerCase())
                 .email(registerRequest.getEmail().trim().toLowerCase())
                 .password(passwordEncoder.encode(registerRequest.getRawPassword()))
                 .roles(Set.of(role))
-                .wallet(wallet)
+                .enabled(true)
+                .locked(false)
+                .expired(false)
                 .build();
+        user.setWallet(wallet);
+        user.setSetting(userSetting);
         userRepo.save(user);
         return user;
+    }
+
+    public boolean isUserTwoFAEnabled(String email) {
+        User user = userRepo.findByEmail(email);
+        if (user != null) {
+            return user.getSetting().isTwoFAEnabled();
+        }
+        throw new UsernameNotFoundException("USER_NOT_FOUND");
     }
 
     public Set<Role> getRoles(String email) {

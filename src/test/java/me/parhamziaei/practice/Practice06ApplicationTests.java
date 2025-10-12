@@ -4,15 +4,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Date;
+import java.util.Random;
 
 @SpringBootTest
 class Practice06ApplicationTests {
 
     @Test
     void contextLoads() {
-        Date date = new Date(System.currentTimeMillis());
-        Date date2 = new Date(System.currentTimeMillis() + 1000 * 60 * 24);
-        System.out.println(System.currentTimeMillis() + " - " + date + " - " + date2);
+        Random rand = new Random();
+        System.out.printf(String.valueOf(rand.nextInt(10000)));
     }
 
 }

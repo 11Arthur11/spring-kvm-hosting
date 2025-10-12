@@ -36,8 +36,8 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "owner", cascade = CascadeType.ALL)
     private Wallet wallet;
 
-    @Column(name = "2fa_enabled")
-    private boolean twoFAEnabled;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserSetting setting;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -57,13 +57,13 @@ public class User implements UserDetails {
     private LocalDateTime updatedAt;
 
     @Column(name = "enabled")
-    private boolean enabled = true;
+    private boolean enabled;
 
     @Column(name = "expired")
-    private boolean expired = false;
+    private boolean expired;
 
     @Column(name = "locked")
-    private boolean locked = false;
+    private boolean locked;
 
     @Column(name = "credentials_expired")
     private boolean credentialsExpired = false;
@@ -82,6 +82,11 @@ public class User implements UserDetails {
     public void setWallet(Wallet wallet) {
         this.wallet = wallet;
         wallet.setOwner(this);
+    }
+
+    public void setSetting(UserSetting setting) {
+        this.setting = setting;
+        setting.setUser(this);
     }
 
     @Override

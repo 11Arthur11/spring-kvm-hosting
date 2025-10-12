@@ -45,6 +45,13 @@ public class JwtService {
         return cookie.map(Cookie::getValue).orElse(null);
     }
 
+    public String extractTwoFactorTokenFromRequest(HttpServletRequest request) {
+        Optional<Cookie> cookie = Arrays.stream(request.getCookies() != null ? request.getCookies() : new Cookie[0])
+                .filter(c -> c.getName().equals("2FA"))
+                .findFirst();
+        return cookie.map(Cookie::getValue).orElse(null);
+    }
+
     public String extractUsername(String token) {
         try {
             return extractClaim(token, Claims::getSubject);
@@ -106,6 +113,22 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateTwoFAToken(
+            String userEmail,
+            String sessionId
+    ) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("purpose", "2FA");
+        claims.put("session_id", sessionId);
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userEmail)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 120))
+                .signWith(SignatureAlgorithm.HS256, getSignKey())
+                .compact();
+    }
+
     public boolean isSignatureValid(String token) {
         try {
             Key key = getSignKey();
@@ -119,11 +142,6 @@ public class JwtService {
         }
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String userEmail = extractUsername(token);
-        return (userEmail.equals(userDetails.getUsername())) && !isTokenExpired(token) && isSignatureValid(token);
-    }
-
     public boolean isTokenValid(String token) {
         try {
             final String userEmail = extractUsername(token);
@@ -134,7 +152,31 @@ public class JwtService {
             if (user == null) {
                 return false;
             }
-            return (!isTokenExpired(token) && isSignatureValid(token));
+            return (
+                    isSignatureValid(token) &&
+                    !isTokenExpired(token) &&
+                    !(extractClaim(token, claims -> claims.get("purpose", String.class).equals("2FA")))
+            );
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public boolean isTwoFactorTokenValid(String token) {
+        try {
+            final String userEmail = extractUsername(token);
+            if (userEmail == null) {
+                return false;
+            }
+            UserDetails user = userService.loadUserByUsername(userEmail);
+            if (user == null) {
+                return false;
+            }
+            return (
+                    isSignatureValid(token) &&
+                    !isTokenExpired(token) &&
+                    (extractClaim(token, claims -> claims.get("purpose", String.class).equals("2FA")))
+            );
         } catch (Exception ex) {
             return false;
         }
@@ -146,10 +188,10 @@ public class JwtService {
                 RefreshToken dbToken = refreshTokenRepo.findByToken(token);
                 return  (
                         dbToken != null &&
-                                dbToken.getToken().equals(token) &&
-                                dbToken.getTokenOwner().equals(userDetails.getUsername()) &&
-                                dbToken.isActive() &&
-                                dbToken.getExpiryDate().isAfter(LocalDateTime.now())
+                        dbToken.getToken().equals(token) &&
+                        dbToken.getTokenOwner().equals(userDetails.getUsername()) &&
+                        dbToken.isActive() &&
+                        dbToken.getExpiryDate().isAfter(LocalDateTime.now())
                 );
             }
             return false;
@@ -164,6 +206,10 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public String extractSessionIdFromTwoFactorToken(String token) {
+        return extractClaim(token, claims -> claims.get("session_id", String.class));
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

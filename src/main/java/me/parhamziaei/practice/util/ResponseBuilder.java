@@ -13,8 +13,18 @@ public class ResponseBuilder {
         return ResponseEntity.status(status).body(response);
     }
 
-    public static <T> ResponseEntity<Object> build(String code, String message, HttpStatus status, T data) {
+    public static <T> ResponseEntity<Object> build(String code, String message, T data, HttpStatus status) {
         ApiResponse<T> response = new ApiResponse<>(false, code, message, data);
+        return ResponseEntity.status(status).body(response);
+    }
+
+    public static ResponseEntity<Object> buildSuccess(String code, String message, HttpStatus status) {
+        ApiResponse<Void> response = new ApiResponse<>(true, code, message, null);
+        return ResponseEntity.status(status).body(response);
+    }
+
+    public static <T> ResponseEntity<Object> buildSuccess(String code, String message, T data, HttpStatus status) {
+        ApiResponse<T> response = new ApiResponse<>(true, code, message, data);
         return ResponseEntity.status(status).body(response);
     }
 
