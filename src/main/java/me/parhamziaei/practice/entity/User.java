@@ -54,6 +54,9 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TIMESTAMP(0)", name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "email_verified")
+    private boolean emailVerified;
+
     @Column(name = "enabled")
     private boolean enabled;
 

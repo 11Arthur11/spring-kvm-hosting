@@ -17,6 +17,7 @@ public class TwoFactorService {
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
     private final TwoFactorRepo twoFactorRepo;
+    private final EmailService emailService;
 
     public TwoFactorSession verifyAndGetSession(String twoFactorJwt, String code) {
         String sessionId = jwtService.extractSessionIdFromTwoFactorToken(twoFactorJwt);
@@ -41,11 +42,11 @@ public class TwoFactorService {
         return session;
     }
 
-    public String addTwoFactor(TwoFactorSession twoFactor) {
+    public String addTwoFactor(TwoFactorSession session) {
         String sessionId = UUID.randomUUID().toString();
-        System.out.println(twoFactor.getCode());
-        twoFactor.setCode(encoder.encode(twoFactor.getCode()));
-        twoFactorRepo.save(sessionId, twoFactor, Duration.ofMinutes(2));
+        emailService.sendTwoFactorCodeEmail(session.getUserEmail(), session.getCode());
+        session.setCode(encoder.encode(session.getCode()));
+        twoFactorRepo.save(sessionId, session, Duration.ofMinutes(2));
         return sessionId;
     }
 

@@ -29,7 +29,7 @@ import java.security.SecureRandom;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/v1/auth")
 public class AuthRestCtrl {
 
     private final UserService userService;
@@ -165,7 +165,6 @@ public class AuthRestCtrl {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         String jwt = jwtService.extractJwtFromRequest(request);
-        String refreshToken = jwtService.extractRefreshTokenFromRequest(request); // why I added this to this controller? :/
         if (jwt != null && jwtService.isTokenValid(jwt)) {
             throw new AlreadyLoggedInException(); //todo remember to handle brute force here!
         }

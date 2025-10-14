@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fa" dir="rtl" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.2/Vazirmatn-font-face.css" rel="stylesheet">
+    <style>
+
+        .main {
+            background-color: #ffffff;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            border-spacing: 0;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .email-container {
+            display: initial;
+            font-family: 'Vazirmatn', sans-serif;
+            padding: 50px 40px;
+            max-width: 600px;
+            text-align: center;
+
+            width: 100%;
+            table-layout: fixed;
+            background-color: #ffffff;
+        }
+
+        .header {
+            font-size: 1.4rem;
+            color: #1565c0;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            color: #333;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .code-box {
+            align-content: center;
+            display: inline-flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .code-digit {
+            margin: 0 5px;
+            width: 55px;
+            height: 55px;
+            border-radius: 10px;
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: block;
+            padding: 11px 5px 0 5px;
+            border: 2px solid #90caf9;
+        }
+
+        .footer {
+            font-size: 0.85rem;
+            color: #777;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <table class="main">
+        <div class="header">تأیید دو عاملی</div>
+
+        <div class="message">
+            لطفا برای تایید هویت خود در سایت کد زیر را وارد کنید
+        </div>
+
+        <div class="code-box">
+            <div class="code-digit" th:text="${code[0]}">4</div>
+            <div class="code-digit" th:text="${code[1]}">5</div>
+            <div class="code-digit" th:text="${code[2]}">8</div>
+            <div class="code-digit" th:text="${code[3]}">2</div>
+        </div>
+
+        <div class="footer">
+            این ایمیل به‌صورت خودکار توسط سامانه ارسال شده است.<br>
+            لطفاً به این پیام پاسخ ندهید.
+        </div>
+    </table>
+</div>
+</body>
+</html>

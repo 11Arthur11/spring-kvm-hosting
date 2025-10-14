@@ -26,12 +26,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
-    private final static String[] skipJwtAuthFilterURI =  {
-            "/favicon.ico",
-            "/api/login",
-            "/auth/login",
-            "/api/logout",
-            "/api/2fa-verify",
+    private final static String[] skipJwtAuthFilterURI = { //todo make a better URI filtering list
+            "swagger-config",
+            ".js",
+            ".css",
+            ".html",
+            ".png",
+            "/docs",
+            "/register",
+            "/login",
+            "/logout",
+            "/2fa-verify",
     };
 
     @Override
@@ -51,6 +56,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 return;
             }
+        }
+
+        //todo remove this
+        if (requestURI.startsWith("/swagger-ui")) {
+            System.out.println("requestURI Bypassed JwtAuthFilter: " + requestURI); // todo remove dev log
+            filterChain.doFilter(request, response);
+            return;
         }
 //        if (
 //                requestURI.endsWith("/favicon.ico") ||

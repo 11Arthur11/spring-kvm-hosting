@@ -34,18 +34,18 @@ public class DataInit implements CommandLineRunner {
 
     public void initAdmin() {
         try {
-            UserDetails user = userService.loadUserByUsername("admin@example.com");
+            UserDetails user = userService.loadUserByUsername("javadtoktamp@gmail.com");
         } catch (UsernameNotFoundException e) {
             RegisterRequest registerRequest = RegisterRequest
                     .builder()
-                    .email("admin@example.com")
+                    .email("javadtoktamp@gmail.com")
                     .rawPassword("12345678")
                     .rawPasswordConfirm("12345678")
                     .fullName("john doe")
                     .build();
 
             userService.register(registerRequest);
-            userService.addRole("admin@example.com", roleRepo.findByName("ROLE_ADMIN"));
+            userService.addRole("javadtoktamp@gmail.com", roleRepo.findByName("ROLE_ADMIN"));
         }
     }
 
