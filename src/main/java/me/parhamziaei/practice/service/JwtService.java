@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.entity.RefreshToken;
 import me.parhamziaei.practice.repository.RefreshTokenRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +23,18 @@ import java.util.*;
 import java.util.function.Function;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
 
-    private final static String SECRET = "f633915d212d5159e506d6d69f6d1adcad3aff7396b05545df48183e1331d537";
+    @Value("${security.jwt_hs_256_key}")
+    private String SECRET;
     private final UserService userService;
     private final RefreshTokenRepo refreshTokenRepo;
+
+    @Autowired
+    public JwtService(UserService userService, RefreshTokenRepo refreshTokenRepo) {
+        this.userService = userService;
+        this.refreshTokenRepo = refreshTokenRepo;
+    }
 
     public String extractJwtFromRequest(HttpServletRequest request) {
         Optional<Cookie> cookie = Arrays.stream(request.getCookies() != null ? request.getCookies() : new Cookie[0])

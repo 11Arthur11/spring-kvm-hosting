@@ -2,7 +2,7 @@ package me.parhamziaei.practice.service;
 
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.entity.TwoFactorSession;
-import me.parhamziaei.practice.exception.custom.authenticate.TwoFactorSessionExpiredException;
+import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.repository.TwoFactorRepo;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class TwoFactorService {
                     twoFactorRepo.save(sessionId, session);
                 }
             } else {
-                throw new TwoFactorSessionExpiredException();
+                throw new InvalidTwoFactorException();
             }
         }
         return session;

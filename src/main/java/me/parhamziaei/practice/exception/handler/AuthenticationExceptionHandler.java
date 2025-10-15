@@ -1,7 +1,12 @@
 package me.parhamziaei.practice.exception.handler;
 
+import lombok.RequiredArgsConstructor;
+import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.exception.custom.authenticate.AlreadyLoggedInException;
+import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
+import me.parhamziaei.practice.service.MessageService;
 import me.parhamziaei.practice.util.ResponseBuilder;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,50 +17,62 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 public class AuthenticationExceptionHandler {
+
+    private final MessageService messageService;
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Object> badCredentialsException() {
-        return ResponseBuilder.build(
-                "BAD_CREDENTIALS",
-                "username or password is incorrect",
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.AUTH_BAD_CREDENTIALS),
                 HttpStatus.BAD_REQUEST
         );
     }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<Object> disabledException() {
-        return ResponseBuilder.build(
-                "ACCOUNT_DISABLED",
-                "account is disabled, contact support for details",
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.AUTH_ACCOUNT_DISABLED),
                 HttpStatus.BAD_REQUEST
                 );
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<Object> usernameNotFoundException() {
-        return ResponseBuilder.build(
-                "EMAIL_NOT_FOUND",
-                "there is no account with the specified email",
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.AUTH_ACCOUNT_NOT_FOUND),
                 HttpStatus.BAD_REQUEST
         );
     }
 
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<Object> lockedException() {
-        return ResponseBuilder.build(
-                "ACCOUNT_LOCKED",
-                "account is locked, contact support for details",
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.AUTH_ACCOUNT_LOCKED),
                 HttpStatus.BAD_REQUEST
         );
     }
 
     @ExceptionHandler(AlreadyLoggedInException.class)
     public ResponseEntity<Object> alreadyLoggedInException() {
-        return ResponseBuilder.build(
-                "ALREADY_LOGGED_IN",
-                "operation cannot be performed because user already logged in",
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.AUTH_ALREADY_LOGGED_IN),
                 HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler(InvalidTwoFactorException.class)
+    public ResponseEntity<Object> invalidTwoFactorException() {
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.AUTH_TWO_FACTOR_INVALID),
+                HttpStatus.BAD_REQUEST
         );
     }
 

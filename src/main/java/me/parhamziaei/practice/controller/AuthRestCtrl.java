@@ -9,9 +9,11 @@ import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.request.LoginRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
 import me.parhamziaei.practice.entity.TwoFactorSession;
+import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.exception.custom.authenticate.AlreadyLoggedInException;
-import me.parhamziaei.practice.exception.custom.authenticate.TwoFactorSessionExpiredException;
+import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.service.JwtService;
+import me.parhamziaei.practice.service.MessageService;
 import me.parhamziaei.practice.service.TwoFactorService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.CookieBuilder;
@@ -36,6 +38,7 @@ public class AuthRestCtrl {
     private final JwtService jwtService;
     private final TwoFactorService twoFAService;
     private final AuthenticationManager authenticationManager;
+    private final MessageService messageService;
 
 //    @PostMapping("/login")
 //    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
@@ -117,7 +120,7 @@ public class AuthRestCtrl {
         String twoFactorJwt = jwtService.extractTwoFactorTokenFromRequest(request);
 
         if (twoFactorJwt == null) {
-            throw new TwoFactorSessionExpiredException();
+            throw new InvalidTwoFactorException();
         }
 
         TwoFactorSession twoFactorSession = twoFAService.verifyAndGetSession(twoFactorJwt, code);
@@ -148,15 +151,15 @@ public class AuthRestCtrl {
             }
 
             return ResponseBuilder.buildSuccess(
-                    "2FA_VERIFIED",
-                    "credentials and 2fa verified successfully",
+                    "VERIFIED",
+                    messageService.get(Message.AUTH_LOGIN_SUCCESS),
                     HttpStatus.OK
             );
         }
 
-        return ResponseBuilder.build(
-                "2FA_DENIED",
-                "2FA could not be verified",
+        return ResponseBuilder.buildFailed(
+                "DENIED",
+                messageService.get(Message.AUTH_TWO_FACTOR_INVALID),
                 HttpStatus.BAD_REQUEST
         );
     }
@@ -192,41 +195,34 @@ public class AuthRestCtrl {
             response.addCookie(twoFactorCookie);
 
             return ResponseBuilder.buildSuccess(
-                    "2FA_SENT",
-                    "credentials verified successfully, waiting for 2FA code",
+                    "SENT",
+                    messageService.get(Message.AUTH_TWO_FACTOR_SENT),
                     auth.getName(),
                     HttpStatus.OK
             );
-        } else {
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
-            UserDetails user = userService.loadUserByUsername(loginRequest.getEmail());
-            String newJwt = jwtService.generateToken(user);
-
-            if (loginRequest.isRememberMe()) {
-                String newRefreshToken = jwtService.generateRefreshToken(user);
-                Cookie accessTokenCookie = CookieBuilder.buildAccessTokenCookie(newJwt, 604000);
-                Cookie refreshTokenCookie = CookieBuilder.buildRefreshTokenCookie(newRefreshToken);
-
-                response.addCookie(accessTokenCookie);
-                response.addCookie(refreshTokenCookie);
-
-                return ResponseBuilder.buildSuccess(
-                        "LOGIN_SUCCESS",
-                        "user logged in successfully.",
-                        HttpStatus.OK
-                );
-            }
-
-            Cookie accessTokenCookie = CookieBuilder.buildAccessTokenCookie(newJwt, 1800);
-            response.addCookie(accessTokenCookie);
-
-            return ResponseBuilder.buildSuccess(
-                    "LOGIN_SUCCESS",
-                    "user logged in successfully.",
-                    HttpStatus.OK
-            );
         }
+
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        UserDetails user = userService.loadUserByUsername(loginRequest.getEmail());
+        String newJwt = jwtService.generateToken(user);
+
+        Cookie accessTokenCookie = CookieBuilder.buildAccessTokenCookie(newJwt, 1800);
+
+        if (loginRequest.isRememberMe()) {
+            String newRefreshToken = jwtService.generateRefreshToken(user);
+            Cookie refreshTokenCookie = CookieBuilder.buildRefreshTokenCookie(newRefreshToken);
+            accessTokenCookie.setMaxAge(604000);
+            response.addCookie(refreshTokenCookie);
+        }
+
+        response.addCookie(accessTokenCookie);
+
+        return ResponseBuilder.buildSuccess(
+                "SUCCESS",
+                messageService.get(Message.AUTH_LOGIN_SUCCESS),
+                HttpStatus.OK
+        );
+
     }
 
     @PostMapping("/register")

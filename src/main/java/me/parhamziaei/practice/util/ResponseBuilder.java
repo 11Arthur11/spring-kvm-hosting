@@ -8,23 +8,23 @@ public class ResponseBuilder {
 
     private ResponseBuilder() {}
 
-    public static ResponseEntity<Object> build(String code, String message, HttpStatus status) {
-        ApiResponse<Void> response = new ApiResponse<>(false, code, message, null);
+    public static ResponseEntity<Object> buildFailed(String type, String message, HttpStatus status) {
+        ApiResponse<Void> response = new ApiResponse<>(false, type, message, null);
         return ResponseEntity.status(status).body(response);
     }
 
-    public static <T> ResponseEntity<Object> build(String code, String message, T data, HttpStatus status) {
-        ApiResponse<T> response = new ApiResponse<>(false, code, message, data);
+    public static <T> ResponseEntity<Object> buildFailed(String type, String message, T data, HttpStatus status) {
+        ApiResponse<T> response = new ApiResponse<>(false, type, message, data);
         return ResponseEntity.status(status).body(response);
     }
 
-    public static ResponseEntity<Object> buildSuccess(String code, String message, HttpStatus status) {
-        ApiResponse<Void> response = new ApiResponse<>(true, code, message, null);
+    public static ResponseEntity<Object> buildSuccess(String type, String message, HttpStatus status) {
+        ApiResponse<Void> response = new ApiResponse<>(true, type, message, null);
         return ResponseEntity.status(status).body(response);
     }
 
-    public static <T> ResponseEntity<Object> buildSuccess(String code, String message, T data, HttpStatus status) {
-        ApiResponse<T> response = new ApiResponse<>(true, code, message, data);
+    public static <T> ResponseEntity<Object> buildSuccess(String type, String message, T data, HttpStatus status) {
+        ApiResponse<T> response = new ApiResponse<>(true, type, message, data);
         return ResponseEntity.status(status).body(response);
     }
 

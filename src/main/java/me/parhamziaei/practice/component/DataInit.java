@@ -5,6 +5,7 @@ import me.parhamziaei.practice.dto.request.RegisterRequest;
 import me.parhamziaei.practice.entity.Role;
 import me.parhamziaei.practice.repository.RoleRepo;
 import me.parhamziaei.practice.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,6 +17,13 @@ public class DataInit implements CommandLineRunner {
 
     private final RoleRepo roleRepo;
     private final UserService userService;
+
+    @Value("${initialize.admin.email}")
+    String adminEmail;
+    @Value("${initialize.admin.password}")
+    String adminPassword;
+    @Value("${initialize.admin.fullname}")
+    String adminFullName;
 
     @Override
     public void run(String... args) throws Exception {
@@ -34,18 +42,21 @@ public class DataInit implements CommandLineRunner {
 
     public void initAdmin() {
         try {
-            UserDetails user = userService.loadUserByUsername("javadtoktamp@gmail.com");
+            UserDetails user = userService.loadUserByUsername(adminEmail);
         } catch (UsernameNotFoundException e) {
-            RegisterRequest registerRequest = RegisterRequest
+            RegisterRequest request = RegisterRequest
                     .builder()
-                    .email("javadtoktamp@gmail.com")
-                    .rawPassword("12345678")
-                    .rawPasswordConfirm("12345678")
-                    .fullName("john doe")
+                    .email(adminEmail)
+                    .rawPassword(adminPassword)
+                    .rawPasswordConfirm(adminPassword)
+                    .fullName(adminFullName)
                     .build();
 
-            userService.register(registerRequest);
-            userService.addRole("javadtoktamp@gmail.com", roleRepo.findByName("ROLE_ADMIN"));
+            userService.register(request);
+            userService.addRole(
+                    request.getEmail(),
+                    roleRepo.findByName("ROLE_ADMIN")
+            );
         }
     }
 

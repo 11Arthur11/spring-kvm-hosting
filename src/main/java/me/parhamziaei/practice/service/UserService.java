@@ -40,7 +40,7 @@ public class UserService implements UserDetailsService {
         return !userRepo.existsByEmail(email);
     }
 
-    public User register(RegisterRequest registerRequest) throws IllegalArgumentException {
+    public User register(RegisterRequest registerRequest) {
         if (!isEmailValid(registerRequest.getEmail())) {
             throw new EmailAlreadyTakenException();
         }

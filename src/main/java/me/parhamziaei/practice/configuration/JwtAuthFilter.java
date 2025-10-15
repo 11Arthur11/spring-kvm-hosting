@@ -64,20 +64,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-//        if (
-//                requestURI.endsWith("/favicon.ico") ||
-//                        requestURI.endsWith(".css") ||
-//                        requestURI.endsWith(".js") ||
-//                        requestURI.endsWith("/api/login") ||
-//                        requestURI.endsWith("/auth/login") ||
-//                        requestURI.endsWith("/api/logout") ||
-//                        requestURI.endsWith("/auth/register") ||
-//                        requestURI.endsWith("/404")
-//        ) {
-//            System.out.println("requestURI Bypassed JwtAuthFilter: " + requestURI);
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
 
         jwt = jwtService.extractJwtFromRequest(request);
 
