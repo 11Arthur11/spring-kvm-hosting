@@ -66,16 +66,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     System.out.println("JwtFilter Success for user: " + userEmail + " requestURI: " + requestURI); // todo remove dev log
                 } else if (refreshToken != null && jwtService.isRefreshTokenValid(refreshToken, user)) {
-                    String newRefreshedJwt = jwtService.generateAccessToken(user, Duration.ofMinutes(30));
-
-                    Cookie jwtCookie = CookieBuilder.buildAccessTokenCookie(newRefreshedJwt, 1800);
-
-                    response.addCookie(jwtCookie);
+                    String newRefreshedJwt = jwtService.generateAccessToken(user);
+                    response.addCookie(CookieBuilder.buildAccessTokenCookie(newRefreshedJwt, SecurityUtil.ACCESS_JWT_TTL));
 
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     user, null, user.getAuthorities()
                             );
+
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     System.out.println("JwtFilter Refresh Token Success for user: " + userEmail + " requestURI: " + requestURI); // todo remove dev log

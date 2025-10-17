@@ -31,11 +31,11 @@ public class CookieBuilder {
         return cookie;
     }
 
-    public static Cookie buildAccessTokenCookie(String token, int expiresInSeconds) {
+    public static Cookie buildAccessTokenCookie(String token, Duration ttl) {
         Cookie jwtCookie = new Cookie("JWT", token);
         jwtCookie.setPath("/");
         jwtCookie.setHttpOnly(true);
-        jwtCookie.setMaxAge(expiresInSeconds);
+        jwtCookie.setMaxAge((int) ttl.toSeconds());
         jwtCookie.setSecure(SECURE_COOKIE_ENABLED);
         jwtCookie.setAttribute("SameSite", "Strict");
         return jwtCookie;
@@ -45,7 +45,7 @@ public class CookieBuilder {
         Cookie refreshTokenCookie = new Cookie("REFRESH", token);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setMaxAge(604800);
+        refreshTokenCookie.setMaxAge((int) SecurityUtil.REFRESH_JWT_TTL.toSeconds());
         refreshTokenCookie.setSecure(SECURE_COOKIE_ENABLED);
         refreshTokenCookie.setAttribute("SameSite", "Strict");
         return refreshTokenCookie;

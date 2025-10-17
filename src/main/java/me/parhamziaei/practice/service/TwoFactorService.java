@@ -7,6 +7,7 @@ import me.parhamziaei.practice.exception.custom.authenticate.InvalidEmailVerifyC
 import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.repository.redis.EmailVerifyRepo;
 import me.parhamziaei.practice.repository.redis.TwoFactorRepo;
+import me.parhamziaei.practice.util.SecurityUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -63,7 +64,7 @@ public class TwoFactorService {
                 .attempts(0)
                 .build();
 
-        emailVerifyRepo.save(sessionId, session, Duration.ofMinutes(5));
+        emailVerifyRepo.save(sessionId, session, SecurityUtil.EMAIL_VERIFY_SESSION_TTL);
         return sessionId;
     }
 
@@ -100,7 +101,7 @@ public class TwoFactorService {
         String sessionId = UUID.randomUUID().toString();
         emailService.sendTwoFactorCodeEmail(session.getUserEmail(), session.getCode());
         session.setCode(encoder.encode(session.getCode()));
-        twoFactorRepo.save(sessionId, session, Duration.ofMinutes(2));
+        twoFactorRepo.save(sessionId, session, SecurityUtil.TWO_FACTOR_SESSION_TTL);
         return sessionId;
     }
 

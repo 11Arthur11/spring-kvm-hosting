@@ -23,6 +23,10 @@ public enum Message {
     SERVER_IO_ERROR("error.server.io"),
     SERVER_VALIDATION_ERROR("error.server.validation"),
     SERVER_RESOURCE_NOT_FOUND("error.server.resource_not_found"),
+    DEFAULT_FAILED("error.default_failed"),
+
+    USER_PASSWORD_CHANGE_SUCCESS("success.user.password_change"),
+    USER_PASSWORD_CHANGE_FAILED("failed.user.password_change"),
 
     MAIL_TITLE_EMAIL_VERIFICATION("mail.title.email_verification"),
     MAIL_TITLE_EMAIL_TWO_FACTOR("mail.title.two_factor_code");

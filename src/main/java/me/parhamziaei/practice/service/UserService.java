@@ -1,6 +1,7 @@
 package me.parhamziaei.practice.service;
 
 import lombok.RequiredArgsConstructor;
+import me.parhamziaei.practice.dto.request.ChangePasswordRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
 import me.parhamziaei.practice.entity.Role;
 import me.parhamziaei.practice.entity.User;
@@ -63,6 +64,20 @@ public class UserService implements UserDetailsService {
         user.setWallet(wallet);
         user.setSetting(userSetting);
         userRepo.save(user);
+    }
+
+    public boolean changePasswordAndGetResult(ChangePasswordRequest cpRequest) {
+        if (!cpRequest.getNewPasswordConfirm().equals(cpRequest.getNewPassword())) {
+            throw new PasswordPolicyException("PASSWORD_CANNOT_BE_CHANGED");
+        }
+        User user = (User) loadUserByUsername(cpRequest.getUserEmail());
+        if (passwordEncoder.matches(cpRequest.getOldPassword(), user.getPassword())) {
+            user.setPassword(passwordEncoder.encode(cpRequest.getNewPassword()));
+            userRepo.update(user);
+            return true;
+        } else  {
+            return false;
+        }
     }
 
     public void register(RegisterRequest registerRequest) {
