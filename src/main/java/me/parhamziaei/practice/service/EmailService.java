@@ -3,6 +3,7 @@ package me.parhamziaei.practice.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.exception.custom.service.EmailServiceException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,6 +18,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final MessageService messageService;
 
     @Async
     public void sendTwoFactorCodeEmail(String to, String code) {
@@ -32,7 +34,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(to);
-            helper.setSubject("Two-Factor Email");
+            helper.setSubject(messageService.get(Message.MAIL_TITLE_EMAIL_TWO_FACTOR));
             helper.setText(template, true);
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
@@ -40,6 +42,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendEmailVerificationEmail(String to, String code) {
         try {
             char[] codeArray = code.toCharArray();
@@ -53,7 +56,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(to);
-            helper.setSubject("Email Verification");
+            helper.setSubject(messageService.get(Message.MAIL_TITLE_EMAIL_VERIFICATION));
             helper.setText(template, true);
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {

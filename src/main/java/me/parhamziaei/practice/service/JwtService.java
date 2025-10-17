@@ -8,7 +8,6 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.entity.RefreshToken;
 import me.parhamziaei.practice.repository.RefreshTokenRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -65,13 +65,14 @@ public class JwtService {
         }
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
-        return generateRefreshToken(new HashMap<>(), userDetails);
+    public String generateRefreshToken(UserDetails userDetails, Duration tokenValidity) {
+        return generateRefreshToken(new HashMap<>(), userDetails, tokenValidity);
     }
 
     public String generateRefreshToken(
             Map<String, Object> extraClaims,
-            UserDetails userDetails
+            UserDetails userDetails,
+            Duration tokenValidity
     ) {
         Date expiryDate = new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 168);
         String token = Jwts.builder()
@@ -101,26 +102,28 @@ public class JwtService {
         refreshTokenRepo.delete(refreshTokenObj);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateAccessToken(UserDetails userDetails, Duration tokenValidity) {
+        return generateAccessToken(new HashMap<>(), userDetails, tokenValidity);
     }
 
-    public String generateToken(
+    public String generateAccessToken(
             Map<String, Object> extraClaims,
-            UserDetails userDetails
+            UserDetails userDetails,
+            Duration tokenValidity
     ) {
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidity.toMillis()))
                 .signWith(SignatureAlgorithm.HS256, getSignKey())
                 .compact();
     }
 
-    public String generateTwoFAToken(
+    public String generateTwoFactorToken(
             String userEmail,
-            String sessionId
+            String sessionId,
+            Duration tokenValidity
     ) {
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("purpose", "2FA");
@@ -129,7 +132,7 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(userEmail)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 120))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidity.toMillis()))
                 .signWith(SignatureAlgorithm.HS256, getSignKey())
                 .compact();
     }

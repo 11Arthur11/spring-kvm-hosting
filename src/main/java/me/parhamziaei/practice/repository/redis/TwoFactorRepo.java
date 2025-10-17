@@ -1,7 +1,7 @@
-package me.parhamziaei.practice.repository;
+package me.parhamziaei.practice.repository.redis;
 
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.entity.TwoFactorSession;
+import me.parhamziaei.practice.entity.redis.TwoFactorSession;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 

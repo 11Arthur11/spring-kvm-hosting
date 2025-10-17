@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.service.JwtService;
 import me.parhamziaei.practice.service.UserService;
+import me.parhamziaei.practice.util.CookieBuilder;
+import me.parhamziaei.practice.util.SecurityUtil;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +21,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -26,18 +31,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
-    private final static String[] skipJwtAuthFilterURI = { //todo make a better URI filtering list
-            "swagger-config",
-            ".js",
-            ".css",
-            ".html",
-            ".png",
-            "/docs",
-            "/register",
-            "/login",
-            "/logout",
-            "/2fa-verify",
-    };
 
     @Override
     protected void doFilterInternal(
@@ -50,16 +43,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String userEmail = null;
         String requestURI = request.getRequestURI();
 
-        for (String skipUri : skipJwtAuthFilterURI) {
-            if (requestURI.endsWith(skipUri)){
-                System.out.println("requestURI Bypassed JwtAuthFilter: " + requestURI); // todo remove dev log
-                filterChain.doFilter(request, response);
-                return;
-            }
-        }
-
-        //todo remove this
-        if (requestURI.startsWith("/swagger-ui")) {
+        if (SecurityUtil.requestMatcher(requestURI)) {
             System.out.println("requestURI Bypassed JwtAuthFilter: " + requestURI); // todo remove dev log
             filterChain.doFilter(request, response);
             return;
@@ -82,14 +66,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     System.out.println("JwtFilter Success for user: " + userEmail + " requestURI: " + requestURI); // todo remove dev log
                 } else if (refreshToken != null && jwtService.isRefreshTokenValid(refreshToken, user)) {
-                    String newRefreshedJwt = jwtService.generateToken(user);
+                    String newRefreshedJwt = jwtService.generateAccessToken(user, Duration.ofMinutes(30));
 
-                    Cookie jwtCookie = new Cookie("JWT", newRefreshedJwt);
-                    jwtCookie.setPath("/");
-                    jwtCookie.setHttpOnly(true);
-                    jwtCookie.setMaxAge(604800);
-                    jwtCookie.setSecure(false);
-                    jwtCookie.setAttribute("SameSite", "Strict");
+                    Cookie jwtCookie = CookieBuilder.buildAccessTokenCookie(newRefreshedJwt, 1800);
 
                     response.addCookie(jwtCookie);
 
@@ -107,6 +86,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
         if (currentAuth == null || currentAuth instanceof AnonymousAuthenticationToken) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            System.out.println("Access denied in jwtAuthFilter to requestURI: " + requestURI); // todo remove dev log
             return;
         }
 

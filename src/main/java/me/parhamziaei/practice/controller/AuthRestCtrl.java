@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.request.LoginRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
-import me.parhamziaei.practice.entity.TwoFactorSession;
+import me.parhamziaei.practice.entity.redis.TwoFactorSession;
 import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.exception.custom.authenticate.AlreadyLoggedInException;
 import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
@@ -27,7 +27,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.SecureRandom;
+import java.time.Duration;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,75 +39,6 @@ public class AuthRestCtrl {
     private final TwoFactorService twoFAService;
     private final AuthenticationManager authenticationManager;
     private final MessageService messageService;
-
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
-//        String jwt = jwtService.extractJwtFromRequest(request);
-//        String refreshToken = jwtService.extractRefreshTokenFromRequest(request);
-//        if (jwt != null && jwtService.isTokenValid(jwt)) {
-//            throw new AlreadyLoggedInException(); //todo remember to handle brute force here!
-//        }
-//
-//        UsernamePasswordAuthenticationToken token =
-//                new UsernamePasswordAuthenticationToken(
-//                        loginRequest.getEmail(),
-//                        loginRequest.getPassword()
-//                );
-//
-//        Authentication auth = authenticationManager.authenticate(token);
-//        SecurityContextHolder.getContext().setAuthentication(auth);
-//
-//        UserDetails user = userService.loadUserByUsername(loginRequest.getEmail());
-//        String newJwt = jwtService.generateToken(user);
-//
-//        Cookie jwtCookie = new Cookie("JWT", newJwt);
-//        jwtCookie.setPath("/");
-//        jwtCookie.setHttpOnly(true);
-//        jwtCookie.setMaxAge(1800);
-//        jwtCookie.setSecure(false);
-//        jwtCookie.setAttribute("SameSite", "Strict");
-//
-//        if (loginRequest.isRememberMe()) {
-//            String newRefreshToken = jwtService.generateRefreshToken(user);
-//            Cookie refreshTokenCookie = new Cookie("REFRESH", newRefreshToken);
-//            refreshTokenCookie.setPath("/");
-//            refreshTokenCookie.setHttpOnly(true);
-//            refreshTokenCookie.setMaxAge(604800);
-//            refreshTokenCookie.setSecure(false);
-//            refreshTokenCookie.setAttribute("SameSite", "Strict");
-//
-//            response.addCookie(refreshTokenCookie);
-//
-//            jwtCookie.setMaxAge(604800);
-//        }
-//
-//        response.addCookie(jwtCookie);
-//
-//        userService.updateLastLogin(loginRequest.getEmail());
-//        return ResponseEntity.ok().body(
-//                new ApiResponse(
-//                        true,
-//                        "LOGIN_SUCCESS",
-//                        "Login successful",
-//                        null
-//                )
-//        );
-//    }
-//
-//    @PostMapping("/register")
-//    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest, HttpServletRequest request) {
-//        String jwt = jwtService.extractJwtFromRequest(request);
-//        if (jwt != null && jwtService.isTokenValid(jwt)) {
-//            return ResponseEntity.status(HttpStatus.CONFLICT)
-//                    .body("ALREADY_LOGGED_IN");
-//        }
-//        try {
-//            userService.register(registerRequest);
-//            return ResponseEntity.ok(Map.of("message", "User registered successfully"));
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.badRequest().body(e.getMessage());
-//        }
-//    }
 
     @PostMapping("/2fa-verify")
     public ResponseEntity<?> twoFactorVerify(@RequestBody String code, HttpServletRequest request, HttpServletResponse response) {
@@ -126,32 +57,32 @@ public class AuthRestCtrl {
         TwoFactorSession twoFactorSession = twoFAService.verifyAndGetSession(twoFactorJwt, code);
 
         if (twoFactorSession != null && twoFactorSession.isVerified()) {
+
             UserDetails user = userService.loadUserByUsername(jwtService.extractUsername(twoFactorJwt));
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
                             user, null, user.getAuthorities()
                     );
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
             SecurityContextHolder.getContext().setAuthentication(authToken);
-            String newJwt = jwtService.generateToken(user);
-            Cookie emptyTwoFactorCookie = CookieBuilder.emptyCookie("2FA");
+            String newJwt = jwtService.generateAccessToken(user, Duration.ofMinutes(30));
 
             Cookie accessTokenCookie = CookieBuilder.buildAccessTokenCookie(newJwt, 1800);
 
-            response.addCookie(accessTokenCookie);
-            response.addCookie(emptyTwoFactorCookie);
+            response.addCookie(CookieBuilder.emptyCookie("2FA"));
 
             if (twoFactorSession.isRememberMe()) {
-                String newRefreshToken = jwtService.generateRefreshToken(user);
-                accessTokenCookie = CookieBuilder.buildAccessTokenCookie(newJwt, 604000);
+                String newRefreshToken = jwtService.generateRefreshToken(user, Duration.ofDays(7));
                 Cookie refreshTokenCookie = CookieBuilder.buildRefreshTokenCookie(newRefreshToken);
-
-                response.addCookie(accessTokenCookie);
+                accessTokenCookie.setMaxAge(604000);
                 response.addCookie(refreshTokenCookie);
             }
 
+            response.addCookie(accessTokenCookie);
+
             return ResponseBuilder.buildSuccess(
-                    "VERIFIED",
+                    "DONE",
                     messageService.get(Message.AUTH_LOGIN_SUCCESS),
                     HttpStatus.OK
             );
@@ -172,25 +103,47 @@ public class AuthRestCtrl {
             throw new AlreadyLoggedInException(); //todo remember to handle brute force here!
         }
 
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    loginRequest.getEmail(),
-                    loginRequest.getPassword()
-                )
-        );
+        Authentication auth;
+        final String email = loginRequest.getEmail().toLowerCase().trim();
+
+         try {
+             auth = authenticationManager.authenticate(
+                     new UsernamePasswordAuthenticationToken(
+                             email,
+                             loginRequest.getPassword()
+                     )
+             );
+         } catch (DisabledException ignored) {
+             final String twoFactorToken = jwtService.extractTwoFactorTokenFromRequest(request);
+
+             if (
+                     twoFactorToken != null &&
+                     twoFAService.hasActiveEmailVerifySession(
+                             jwtService.extractSessionIdFromTwoFactorToken(twoFactorToken
+                     ))
+             ) {
+                 return ResponseBuilder.buildFailed(
+                         "SENT",
+                         messageService.get(Message.REGISTER_ACCOUNT_NOT_VERIFIED),
+                         HttpStatus.BAD_REQUEST
+                 );
+             }
+
+             final String sessionId = twoFAService.sendEmailVerificationCode(email);
+             final String emailVerifyJwt = jwtService.generateTwoFactorToken(email, sessionId, Duration.ofMinutes(5));
+             response.addCookie(CookieBuilder.twoFactorCookie(emailVerifyJwt, Duration.ofMinutes(5)));
+
+             return ResponseBuilder.buildFailed(
+                     "SENT",
+                     messageService.get(Message.REGISTER_ACCOUNT_NOT_VERIFIED),
+                     HttpStatus.BAD_REQUEST
+             );
+         }
 
         if (userService.isUserTwoFAEnabled(auth.getName())) {
-            SecureRandom random = new SecureRandom();
-            TwoFactorSession twoFactor = TwoFactorSession.builder()
-                    .code(String.format("%04d", random.nextInt(10000)))
-                    .rememberMe(loginRequest.isRememberMe())
-                    .userEmail(loginRequest.getEmail().toLowerCase())
-                    .verified(false)
-                    .build();
-
-            String sessionId = twoFAService.addTwoFactor(twoFactor);
-            String twoFactorToken = jwtService.generateTwoFAToken(loginRequest.getEmail(), sessionId);
-            Cookie twoFactorCookie = CookieBuilder.twoFactorCookie(twoFactorToken);
+            String sessionId = twoFAService.sendTwoFactor(email, loginRequest.isRememberMe());
+            String twoFactorToken = jwtService.generateTwoFactorToken(email, sessionId, Duration.ofMinutes(2));
+            Cookie twoFactorCookie = CookieBuilder.twoFactorCookie(twoFactorToken, Duration.ofMinutes(2));
 
             response.addCookie(twoFactorCookie);
 
@@ -204,12 +157,12 @@ public class AuthRestCtrl {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
         UserDetails user = userService.loadUserByUsername(loginRequest.getEmail());
-        String newJwt = jwtService.generateToken(user);
+        String newJwt = jwtService.generateAccessToken(user, Duration.ofMinutes(30));
 
         Cookie accessTokenCookie = CookieBuilder.buildAccessTokenCookie(newJwt, 1800);
 
         if (loginRequest.isRememberMe()) {
-            String newRefreshToken = jwtService.generateRefreshToken(user);
+            String newRefreshToken = jwtService.generateRefreshToken(user, Duration.ofDays(7));
             Cookie refreshTokenCookie = CookieBuilder.buildRefreshTokenCookie(newRefreshToken);
             accessTokenCookie.setMaxAge(604000);
             response.addCookie(refreshTokenCookie);
@@ -218,7 +171,7 @@ public class AuthRestCtrl {
         response.addCookie(accessTokenCookie);
 
         return ResponseBuilder.buildSuccess(
-                "SUCCESS",
+                "DONE",
                 messageService.get(Message.AUTH_LOGIN_SUCCESS),
                 HttpStatus.OK
         );
@@ -226,17 +179,65 @@ public class AuthRestCtrl {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest, HttpServletRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest, HttpServletRequest request, HttpServletResponse response) {
         String jwt = jwtService.extractJwtFromRequest(request);
         if (jwt != null && jwtService.isTokenValid(jwt)) {
             throw new AlreadyLoggedInException();
         }
+
         userService.register(registerRequest);
+        final String email = registerRequest.getEmail().toLowerCase().trim();
+        final String sessionId = twoFAService.sendEmailVerificationCode(email);
+        final String twoFactorToken = jwtService.generateTwoFactorToken(email, sessionId, Duration.ofMinutes(5));
+        final Cookie verificationCookie = CookieBuilder.twoFactorCookie(twoFactorToken, Duration.ofMinutes(5));
+        response.addCookie(verificationCookie);
+
         return ResponseBuilder.buildSuccess(
-                "REGISTERED_SUCCESSFULLY",
-                "user registration succeed",
+                "SENT",
+                messageService.get(Message.REGISTER_SUCCESS_WAITING_FOR_ACTIVATION),
                 HttpStatus.OK
         );
+    }
+
+    @PostMapping("/email-verify")
+    public ResponseEntity<?> verifyEmail(@RequestBody String code, HttpServletRequest request, HttpServletResponse response) {
+        final String twoFactorJwt = jwtService.extractTwoFactorTokenFromRequest(request);
+        final String userEmail = jwtService.extractUsername(twoFactorJwt);
+
+        if (twoFactorJwt == null) {
+            throw new InvalidTwoFactorException();
+        }
+
+        if (twoFAService.isVerificationCodeCorrect(twoFactorJwt, code)) {
+            userService.enableUser(userEmail);
+
+            UserDetails user = userService.loadUserByUsername(userEmail);
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(
+                            user, null, user.getAuthorities()
+                    );
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+
+            final String accessToken = jwtService.generateAccessToken(user, Duration.ofMinutes(30));
+            final Cookie accessTokenCookie = CookieBuilder.buildAccessTokenCookie(accessToken, 1800);
+
+            response.addCookie(accessTokenCookie);
+            response.addCookie(CookieBuilder.emptyCookie("2FA"));
+
+            return ResponseBuilder.buildSuccess(
+                    "DONE",
+                    messageService.get(Message.REGISTER_SUCCESSFULLY_DONE), // todo make language enum var
+                    HttpStatus.OK
+            );
+        }
+
+        return ResponseBuilder.buildFailed(
+                "DENIED",
+                null, // todo make language enum var
+                HttpStatus.BAD_REQUEST
+        );
+
     }
 
     @PostMapping("/logout")
@@ -245,18 +246,10 @@ public class AuthRestCtrl {
 
         String refreshToken = jwtService.extractRefreshTokenFromRequest(request);
 
-        Cookie replaceJwtCookie = new Cookie("JWT", "");
-        replaceJwtCookie.setHttpOnly(true);
-        replaceJwtCookie.setMaxAge(0);
-        replaceJwtCookie.setSecure(false);
-        replaceJwtCookie.setAttribute("SameSite", "Strict");
-        response.addCookie(replaceJwtCookie);
+        Cookie replaceJwtCookie = CookieBuilder.emptyCookie("JWT");
+        Cookie replaceRefreshTokenCookie = CookieBuilder.emptyCookie("REFRESH");
 
-        Cookie replaceRefreshTokenCookie = new Cookie("REFRESH", "");
-        replaceRefreshTokenCookie.setHttpOnly(true);
-        replaceRefreshTokenCookie.setMaxAge(0);
-        replaceRefreshTokenCookie.setSecure(false);
-        replaceRefreshTokenCookie.setAttribute("SameSite", "Strict");
+        response.addCookie(replaceJwtCookie);
         response.addCookie(replaceRefreshTokenCookie);
 
         if (refreshToken != null) {
@@ -264,8 +257,8 @@ public class AuthRestCtrl {
         }
 
         return ResponseBuilder.buildSuccess(
-                "LOGGED_OUT_SUCCESSFULLY",
-                "user successfully logged out",
+                "DONE",
+                messageService.get(Message.AUTH_LOGOUT_SUCCESS),
                 HttpStatus.OK
         );
     }

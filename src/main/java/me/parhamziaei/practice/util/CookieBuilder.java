@@ -2,6 +2,8 @@ package me.parhamziaei.practice.util;
 
 import jakarta.servlet.http.Cookie;
 
+import java.time.Duration;
+
 public class CookieBuilder {
 
     private CookieBuilder() {}
@@ -9,11 +11,11 @@ public class CookieBuilder {
     // todo make this true in production phase
     private static final boolean SECURE_COOKIE_ENABLED = false;
 
-    public static Cookie twoFactorCookie(String token) {
+    public static Cookie twoFactorCookie(String token, Duration ttl) {
         Cookie cookie = new Cookie("2FA", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(120);
+        cookie.setMaxAge((int) ttl.toSeconds());
         cookie.setSecure(SECURE_COOKIE_ENABLED);
         cookie.setAttribute("SameSite", "Strict");
         return cookie;

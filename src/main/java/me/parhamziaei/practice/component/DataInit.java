@@ -52,11 +52,7 @@ public class DataInit implements CommandLineRunner {
                     .fullName(adminFullName)
                     .build();
 
-            userService.register(request);
-            userService.addRole(
-                    request.getEmail(),
-                    roleRepo.findByName("ROLE_ADMIN")
-            );
+            userService.initDefaultAdmin(request);
         }
     }
 

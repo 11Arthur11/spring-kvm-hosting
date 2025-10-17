@@ -10,14 +10,18 @@ import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenEx
 import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
 import me.parhamziaei.practice.repository.RoleRepo;
 import me.parhamziaei.practice.repository.UserRepo;
+import me.parhamziaei.practice.repository.redis.EmailVerifyRepo;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +29,9 @@ public class UserService implements UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final EmailVerifyRepo emailVerifyRepo;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -40,7 +46,26 @@ public class UserService implements UserDetailsService {
         return !userRepo.existsByEmail(email);
     }
 
-    public User register(RegisterRequest registerRequest) {
+    public void initDefaultAdmin(RegisterRequest registerRequest) {
+        Role userRole = roleRepo.findByName("ROLE_USER");
+        Role adminRole = roleRepo.findByName("ROLE_ADMIN");
+        Wallet wallet = new Wallet();
+        UserSetting userSetting = new UserSetting();
+        User user = User.builder()
+                .fullName(registerRequest.getFullName().trim().toLowerCase())
+                .email(registerRequest.getEmail().trim().toLowerCase())
+                .password(passwordEncoder.encode(registerRequest.getRawPassword()))
+                .roles(Set.of(userRole, adminRole))
+                .enabled(true)
+                .locked(false)
+                .expired(false)
+                .build();
+        user.setWallet(wallet);
+        user.setSetting(userSetting);
+        userRepo.save(user);
+    }
+
+    public void register(RegisterRequest registerRequest) {
         if (!isEmailValid(registerRequest.getEmail())) {
             throw new EmailAlreadyTakenException();
         }
@@ -56,14 +81,19 @@ public class UserService implements UserDetailsService {
                 .email(registerRequest.getEmail().trim().toLowerCase())
                 .password(passwordEncoder.encode(registerRequest.getRawPassword()))
                 .roles(Set.of(role))
-                .enabled(true)
+                .enabled(false)
                 .locked(false)
                 .expired(false)
                 .build();
         user.setWallet(wallet);
         user.setSetting(userSetting);
         userRepo.save(user);
-        return user;
+    }
+
+    public void enableUser(String email) {
+        User user = userRepo.findByEmail(email);
+        user.setEnabled(true);
+        userRepo.save(user);
     }
 
     public boolean isUserTwoFAEnabled(String email) {

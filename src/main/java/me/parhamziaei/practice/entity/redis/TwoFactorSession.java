@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.entity;
+package me.parhamziaei.practice.entity.redis;
 
 import lombok.*;
 

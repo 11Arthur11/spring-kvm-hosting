@@ -14,13 +14,18 @@ public enum Message {
     AUTH_LOGIN_SUCCESS("success.auth.login"),
     AUTH_LOGOUT_SUCCESS("success.auth.logout"),
 
-    REGISTER_SUCCESS("success.register.user_registered"),
+    REGISTER_SUCCESSFULLY_DONE("success.register.user_registered"),
     REGISTER_EMAIL_ALREADY_TAKEN("error.register.email_already_taken"),
+    REGISTER_SUCCESS_WAITING_FOR_ACTIVATION("success.register.waiting_for_activation"),
+    REGISTER_ACCOUNT_NOT_VERIFIED("error.register.account_not_verified"),
 
     SERVER_INTERNAL_ERROR("error.server.internal"),
     SERVER_IO_ERROR("error.server.io"),
     SERVER_VALIDATION_ERROR("error.server.validation"),
-    SERVER_RESOURCE_NOT_FOUND("error.server.resource_not_found");
+    SERVER_RESOURCE_NOT_FOUND("error.server.resource_not_found"),
+
+    MAIL_TITLE_EMAIL_VERIFICATION("mail.title.email_verification"),
+    MAIL_TITLE_EMAIL_TWO_FACTOR("mail.title.two_factor_code");
 
     private final String key;
 
