@@ -31,7 +31,7 @@ public class UserRestCtrl {
 
     @Operation(summary = "User change password with old pass and new pass, possible responses: 2")
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest cpRequest, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest cpRequest, HttpServletRequest request) {
 
         final String accessToken = jwtService.extractJwtFromRequest(request);
         final String email = jwtService.extractUsername(accessToken);
@@ -52,7 +52,6 @@ public class UserRestCtrl {
                 messageService.get(Message.USER_PASSWORD_CHANGE_FAILED),
                 HttpStatus.BAD_REQUEST
         );
-
     }
 
 }

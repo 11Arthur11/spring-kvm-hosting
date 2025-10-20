@@ -7,11 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApiResponse<T> {
+public class SimpleResponse {
 
     private boolean success;
     private String type;
     private String message;
-    private T data;
 
 }

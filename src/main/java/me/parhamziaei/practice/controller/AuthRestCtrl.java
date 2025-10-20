@@ -90,6 +90,17 @@ public class AuthRestCtrl {
         );
     }
 
+    @Operation(summary = "Validating use login status with two possible response: 204=logged-in & 401=not-logged-in")
+    @RequestMapping(value = "/validate", method = RequestMethod.HEAD)
+    public ResponseEntity<?> validateLogin(HttpServletRequest request) {
+        final String jwt = jwtService.extractJwtFromRequest(request);
+        if (jwtService.isTokenValid(jwt) && SecurityContextHolder.getContext().getAuthentication() != null) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
     @Operation(summary = "login operation, login user using userEmail and password, possible responses: many")
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
@@ -183,6 +194,7 @@ public class AuthRestCtrl {
         return ResponseBuilder.buildSuccess(
                 "EMAIL_VERIFY_SENT",
                 messageService.get(Message.REGISTER_SUCCESS_WAITING_FOR_ACTIVATION),
+                email,
                 HttpStatus.OK
         );
     }

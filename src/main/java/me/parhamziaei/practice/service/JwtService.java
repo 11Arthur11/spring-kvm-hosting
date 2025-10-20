@@ -151,6 +151,9 @@ public class JwtService {
 
     public boolean isTokenValid(String token) {
         try {
+            if (token == null) {
+                return false;
+            }
             final String userEmail = extractUsername(token);
             if (userEmail == null) {
                 return false;
