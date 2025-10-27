@@ -1,14 +1,14 @@
-package me.parhamziaei.practice.repository;
+package me.parhamziaei.practice.repository.jpa;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.entity.RefreshToken;
+import me.parhamziaei.practice.entity.jpa.RefreshToken;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
-public class RefreshTokenRepo {
+public class RefreshTokenRepoImpl implements RefreshTokenRepo {
 
     private final EntityManager em;
 
@@ -36,7 +36,5 @@ public class RefreshTokenRepo {
             return null;
         }
     }
-
-
 
 }

@@ -2,8 +2,8 @@ package me.parhamziaei.practice.component;
 
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
-import me.parhamziaei.practice.entity.Role;
-import me.parhamziaei.practice.repository.RoleRepo;
+import me.parhamziaei.practice.entity.jpa.Role;
+import me.parhamziaei.practice.repository.jpa.RoleRepo;
 import me.parhamziaei.practice.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

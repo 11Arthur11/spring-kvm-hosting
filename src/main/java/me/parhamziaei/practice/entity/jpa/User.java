@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.entity;
+package me.parhamziaei.practice.entity.jpa;
 
 import jakarta.persistence.*;
 import lombok.*;

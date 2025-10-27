@@ -3,14 +3,14 @@ package me.parhamziaei.practice.service;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.request.ChangePasswordRequest;
 import me.parhamziaei.practice.dto.request.RegisterRequest;
-import me.parhamziaei.practice.entity.Role;
-import me.parhamziaei.practice.entity.User;
-import me.parhamziaei.practice.entity.UserSetting;
-import me.parhamziaei.practice.entity.Wallet;
+import me.parhamziaei.practice.entity.jpa.Role;
+import me.parhamziaei.practice.entity.jpa.User;
+import me.parhamziaei.practice.entity.jpa.UserSetting;
+import me.parhamziaei.practice.entity.jpa.Wallet;
 import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenException;
 import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
-import me.parhamziaei.practice.repository.RoleRepo;
-import me.parhamziaei.practice.repository.UserRepo;
+import me.parhamziaei.practice.repository.jpa.RoleRepo;
+import me.parhamziaei.practice.repository.jpa.UserRepo;
 import me.parhamziaei.practice.repository.redis.EmailVerifyRepo;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,11 +18,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
