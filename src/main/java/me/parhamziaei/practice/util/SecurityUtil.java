@@ -18,6 +18,7 @@ public class SecurityUtil {
     public final static Duration ACCESS_JWT_TTL = Duration.ofSeconds(1800);
     public final static Duration EMAIL_VERIFY_SESSION_TTL= Duration.ofSeconds(300);
     public final static Duration TWO_FACTOR_SESSION_TTL = Duration.ofSeconds(120);
+    public final static Duration TWO_FACTOR_TOKEN_TTL = Duration.ofSeconds(3600);
 
     public static boolean requestMatcher(String requestUrl) {
         for(String filteredUrl : SKIP_URLs) {

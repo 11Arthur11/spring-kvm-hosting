@@ -63,7 +63,7 @@ public class AuthenticationExceptionHandler {
     public ResponseEntity<Object> invalidTwoFactorException() {
         return ResponseBuilder.buildFailed(
                 "ERROR",
-                messageService.get(Message.AUTH_TWO_FACTOR_INVALID),
+                messageService.get(Message.TWO_FACTOR_INVALID),
                 HttpStatus.BAD_REQUEST
         );
     }

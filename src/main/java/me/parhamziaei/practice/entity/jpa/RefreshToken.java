@@ -21,16 +21,12 @@ public class RefreshToken {
     @Column(nullable = false, updatable = false, name = "token_owner")
     private String tokenOwner;
 
-    @Column(columnDefinition = "TIMESTAMP(0)", name = "expiry_date")
-    private LocalDateTime expiryDate;
-
     @Column(name = "active")
     private boolean active = true;
 
-    public RefreshToken(String token, String tokenOwner, LocalDateTime expiryDate) {
+    public RefreshToken(String token, String tokenOwner) {
         this.token = token;
         this.tokenOwner = tokenOwner;
-        this.expiryDate = expiryDate;
     }
 
     public RefreshToken() {}

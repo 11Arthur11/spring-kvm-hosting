@@ -1,17 +1,15 @@
 package me.parhamziaei.practice.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Data
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TicketResponse {
 
     private Long id;

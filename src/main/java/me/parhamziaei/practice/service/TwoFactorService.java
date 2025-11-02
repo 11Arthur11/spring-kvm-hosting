@@ -49,6 +49,9 @@ public class TwoFactorService {
         return session;
     }
 
+    public boolean hasActiveTwoFactorSession(String sessionId) {
+        return twoFactorRepo.get(sessionId) != null;
+    }
     public boolean hasActiveEmailVerifySession(String sessionId) {
         return emailVerifyRepo.get(sessionId) != null;
     }

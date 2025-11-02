@@ -1,6 +1,7 @@
 package me.parhamziaei.practice.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -86,11 +87,7 @@ public class JwtService {
         RefreshToken refreshToken =
                 new RefreshToken(
                         token,
-                        userDetails.getUsername(),
-                        LocalDateTime.ofInstant(
-                                expiryDate.toInstant(),
-                                ZoneId.systemDefault()
-                        )
+                        userDetails.getUsername()
                 );
 
         refreshTokenRepo.save(refreshToken);
@@ -122,16 +119,69 @@ public class JwtService {
     public String generateTwoFactorToken(
             String userEmail,
             String sessionId,
-            Duration tokenValidity
+            boolean rememberMe
     ) {
         HashMap<String, Object> claims = new HashMap<>();
-        claims.put("purpose", "2FA");
+        claims.put("purpose", "LOGIN");
+        claims.put("remember_me", rememberMe);
         claims.put("session_id", sessionId);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userEmail)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + tokenValidity.toMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + SecurityUtil.TWO_FACTOR_TOKEN_TTL.toMillis()))
+                .signWith(SignatureAlgorithm.HS256, getSignKey())
+                .compact();
+    }
+
+    public String generateTwoFactorToken(
+            String userEmail,
+            String sessionId,
+            boolean rememberMe,
+            Date expiresIn
+    ) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("purpose", "LOGIN");
+        claims.put("remember_me", rememberMe);
+        claims.put("session_id", sessionId);
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userEmail)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(expiresIn)
+                .signWith(SignatureAlgorithm.HS256, getSignKey())
+                .compact();
+    }
+
+    public String generateEmailVerifyToken(
+            String userEmail,
+            String sessionId
+    ) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("purpose", "EMAIL_VERIFY");
+        claims.put("session_id", sessionId);
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userEmail)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + SecurityUtil.EMAIL_VERIFY_SESSION_TTL.toMillis()))
+                .signWith(SignatureAlgorithm.HS256, getSignKey())
+                .compact();
+    }
+
+    public String generateEmailVerifyToken(
+            String userEmail,
+            String sessionId,
+            Date expiresIn
+    ) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("purpose", "EMAIL_VERIFY");
+        claims.put("session_id", sessionId);
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userEmail)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(expiresIn)
                 .signWith(SignatureAlgorithm.HS256, getSignKey())
                 .compact();
     }
@@ -144,7 +194,7 @@ public class JwtService {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (SignatureException e) {
+        } catch (SignatureException ignored) {
             return false;
         }
     }
@@ -162,8 +212,7 @@ public class JwtService {
             if (user == null) {
                 return false;
             }
-            boolean forTwoFactorPurpose = Optional.ofNullable(extractClaim(token, claims -> claims.get("purpose", String.class)))
-                    .map("2FA"::equals).orElse(false);
+            boolean forTwoFactorPurpose = Optional.ofNullable(extractClaim(token, claims -> claims.get("purpose", String.class))).isPresent();
             return (
                     isSignatureValid(token) &&
                     !isTokenExpired(token) &&
@@ -187,7 +236,7 @@ public class JwtService {
             return (
                     isSignatureValid(token) &&
                     !isTokenExpired(token) &&
-                    (extractClaim(token, claims -> claims.get("purpose", String.class).equals("2FA")))
+                    !(extractClaim(token, claims -> claims.get("purpose", String.class).isEmpty()))
             );
         } catch (Exception ex) {
             return false;
@@ -202,12 +251,12 @@ public class JwtService {
                         dbToken != null &&
                         dbToken.getToken().equals(token) &&
                         dbToken.getTokenOwner().equals(userDetails.getUsername()) &&
-                        dbToken.isActive() &&
-                        dbToken.getExpiryDate().isAfter(LocalDateTime.now())
+                        dbToken.isActive()
                 );
             }
             return false;
         } catch (Exception ex) {
+            System.out.println("refresh token failed");
             return false;
         }
     }
@@ -218,6 +267,10 @@ public class JwtService {
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public boolean extractRememberMeFromTwoFactorToken(String token) {
+        return extractClaim(token, claims -> claims.get("remember_me", Boolean.class));
     }
 
     public String extractSessionIdFromTwoFactorToken(String token) {

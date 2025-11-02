@@ -29,4 +29,9 @@ public class ResponseBuilder {
         return ResponseEntity.status(status).body(response);
     }
 
+    public static <T> ResponseEntity<Object> buildSuccess(String type, T data, HttpStatus status) {
+        DataResponse<T> response = new DataResponse<>(true, type, null, data);
+        return ResponseEntity.status(status).body(response);
+    }
+
 }

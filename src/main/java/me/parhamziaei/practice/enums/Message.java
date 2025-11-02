@@ -7,16 +7,20 @@ public enum Message {
     AUTH_ACCOUNT_NOT_FOUND("error.auth.account_not_found"),
     AUTH_ACCOUNT_LOCKED("error.auth.account_locked"),
     AUTH_ALREADY_LOGGED_IN("error.auth.already_logged_in"),
-    AUTH_TWO_FACTOR_INVALID("error.auth.2fa_invalid"),
 
-    AUTH_TWO_FACTOR_VERIFIED("success.auth.2fa_verified"),
-    AUTH_TWO_FACTOR_SENT("success.auth.2fa_sent"),
     AUTH_LOGIN_SUCCESS("success.auth.login"),
     AUTH_LOGOUT_SUCCESS("success.auth.logout"),
 
+    TWO_FACTOR_RESEND("success.2fa.resend"),
+    TWO_FACTOR_SENT("success.2fa.sent"),
+    TWO_FACTOR_VERIFIED("success.2fa.verified"),
+    TWO_FACTOR_EMAIL_VERIFY_RESEND("success.2fa.email_verify.resend"),
+    TWO_FACTOR_EMAIL_VERIFY_SEND("success.2fa.email_verify.send"),
+    TWO_FACTOR_INVALID("error.2fa.invalid"),
+    TWO_FACTOR_RESEND_SESSION_EXPIRED("error.2fa.resend_session_expired"),
+
     REGISTER_SUCCESSFULLY_DONE("success.register.user_registered"),
     REGISTER_EMAIL_ALREADY_TAKEN("error.register.email_already_taken"),
-    REGISTER_SUCCESS_WAITING_FOR_ACTIVATION("success.register.waiting_for_activation"),
     REGISTER_ACCOUNT_NOT_VERIFIED("error.register.account_not_verified"),
 
     SERVER_INTERNAL_ERROR("error.server.internal"),

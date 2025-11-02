@@ -26,8 +26,6 @@ public class TicketRequest {
 
     private String submitterFullName;
 
-    @NotBlank
-    @Length(min = 10)
-    private String message;
+    private TicketMessageRequest message;
 
 }

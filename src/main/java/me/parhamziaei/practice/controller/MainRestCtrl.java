@@ -3,13 +3,17 @@ package me.parhamziaei.practice.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.response.ProfileResponse;
+import me.parhamziaei.practice.entity.jpa.RefreshToken;
 import me.parhamziaei.practice.entity.jpa.Role;
 import me.parhamziaei.practice.entity.jpa.User;
+import me.parhamziaei.practice.repository.jpa.RefreshTokenRepo;
 import me.parhamziaei.practice.service.JwtService;
+import me.parhamziaei.practice.service.TicketService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.ResponseBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,15 +25,20 @@ public class MainRestCtrl {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final RefreshTokenRepo refreshTokenRepo; //test
 
     @GetMapping("/favicon.ico")
     private void noFavicon() {
-        System.out.println("favicon.ico is not configured!");
+
     }
 
     @GetMapping("/greeting")
-    public ResponseEntity<String> greeting() {
-        return ResponseEntity.ok("Hello From Backend");
+    public ResponseEntity<?> greeting(HttpServletRequest request) {
+        String refreshToken = jwtService.extractRefreshTokenFromRequest(request);
+        RefreshToken rf = refreshTokenRepo.findByToken(refreshToken);
+        UserDetails user = userService.loadUserByUsername(jwtService.extractUsername(rf.getToken()));
+        boolean valid = jwtService.isRefreshTokenValid(refreshToken, user);
+        return ResponseEntity.ok().body(valid);
     }
 
     @GetMapping("/goodbye")

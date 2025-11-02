@@ -1,16 +1,16 @@
 package me.parhamziaei.practice.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TicketMessageResponse {
 
     private String senderFullName;
@@ -18,5 +18,9 @@ public class TicketMessageResponse {
     private LocalDateTime sentAt;
 
     private String message;
+
+    private String senderRole;
+
+    private Set<TicketAttachmentResponse> attachments;
 
 }

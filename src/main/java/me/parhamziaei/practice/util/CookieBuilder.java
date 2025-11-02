@@ -3,6 +3,8 @@ package me.parhamziaei.practice.util;
 import jakarta.servlet.http.Cookie;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 public class CookieBuilder {
 
@@ -10,12 +12,23 @@ public class CookieBuilder {
 
     // todo make this true in production phase
     private static final boolean SECURE_COOKIE_ENABLED = false;
+    private static final Duration TWO_FACTOR_COOKIE_EXPIRE = Duration.ofSeconds(3600);
 
-    public static Cookie twoFactorCookie(String token, Duration ttl) {
+    public static Cookie twoFactorCookie(String token) {
         Cookie cookie = new Cookie("2FA", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge((int) ttl.toSeconds());
+        cookie.setMaxAge((int) TWO_FACTOR_COOKIE_EXPIRE.toSeconds());
+        cookie.setSecure(SECURE_COOKIE_ENABLED);
+        cookie.setAttribute("SameSite", "Strict");
+        return cookie;
+    }
+
+    public static Cookie twoFactorCookie(String token, Date expires) {
+        Cookie cookie = new Cookie("2FA", token);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge((int)(expires.getTime() - System.currentTimeMillis()) / 1000);
         cookie.setSecure(SECURE_COOKIE_ENABLED);
         cookie.setAttribute("SameSite", "Strict");
         return cookie;
@@ -49,6 +62,12 @@ public class CookieBuilder {
         refreshTokenCookie.setSecure(SECURE_COOKIE_ENABLED);
         refreshTokenCookie.setAttribute("SameSite", "Strict");
         return refreshTokenCookie;
+    }
+
+    public static long getRemainingSeconds(long exp) {
+        long currentEpochSeconds = Instant.now().getEpochSecond();
+        long remaining = exp - currentEpochSeconds;
+        return Math.max(remaining, 0);
     }
 
 }
