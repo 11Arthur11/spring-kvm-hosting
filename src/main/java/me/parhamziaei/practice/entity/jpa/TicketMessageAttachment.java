@@ -3,6 +3,8 @@ package me.parhamziaei.practice.entity.jpa;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -15,15 +17,29 @@ public class TicketMessageAttachment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "file_name")
-    private String fileName;
+    @Column(name = "original_name")
+    private String originalName;
+
+    private String storedName;
+
+    private String storedPath;
+
+    private String mimeType;
+
+    private String ownerEmail;
+
+    private Long size;
+
+    @Column(columnDefinition = "TIMESTAMP(0)", name = "created_at")
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ticket_message_id")
     private TicketMessage ticketMessage;
 
-    public TicketMessageAttachment(String fileName, TicketMessage ticketMessage) {
-        this.fileName = fileName;
-        this.ticketMessage = ticketMessage;
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now().withNano(0);
     }
+
 }

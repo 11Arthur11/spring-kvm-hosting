@@ -21,10 +21,10 @@ public class UserSetting {
     private User user;
 
     @Column(name = "2fa_enabled")
-    private boolean twoFAEnabled = true;
+    private boolean twoFAEnabled = false;
 
     @Column(name = "sms_enabled")
-    private boolean smsNotification = true;
+    private boolean smsNotification = false;
 
     @Column(name = "email_enabled")
     private boolean emailNotification = false;

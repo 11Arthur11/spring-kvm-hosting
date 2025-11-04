@@ -63,11 +63,11 @@ public class UserService implements UserDetailsService {
         userRepo.save(user);
     }
 
-    public boolean changePasswordAndGetResult(ChangePasswordRequest cpRequest) {
+    public boolean changePasswordAndGetResult(ChangePasswordRequest cpRequest, String userEmail) {
         if (!cpRequest.getNewPasswordConfirm().equals(cpRequest.getNewPassword())) {
             throw new PasswordPolicyException("PASSWORD_CANNOT_BE_CHANGED");
         }
-        User user = (User) loadUserByUsername(cpRequest.getUserEmail());
+        User user = (User) loadUserByUsername(userEmail);
         if (passwordEncoder.matches(cpRequest.getOldPassword(), user.getPassword())) {
             user.setPassword(passwordEncoder.encode(cpRequest.getNewPassword()));
             userRepo.update(user);

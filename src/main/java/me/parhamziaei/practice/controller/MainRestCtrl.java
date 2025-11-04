@@ -25,7 +25,6 @@ public class MainRestCtrl {
 
     private final UserService userService;
     private final JwtService jwtService;
-    private final RefreshTokenRepo refreshTokenRepo; //test
 
     @GetMapping("/favicon.ico")
     private void noFavicon() {
@@ -34,11 +33,7 @@ public class MainRestCtrl {
 
     @GetMapping("/greeting")
     public ResponseEntity<?> greeting(HttpServletRequest request) {
-        String refreshToken = jwtService.extractRefreshTokenFromRequest(request);
-        RefreshToken rf = refreshTokenRepo.findByToken(refreshToken);
-        UserDetails user = userService.loadUserByUsername(jwtService.extractUsername(rf.getToken()));
-        boolean valid = jwtService.isRefreshTokenValid(refreshToken, user);
-        return ResponseEntity.ok().body(valid);
+        return ResponseEntity.ok("Hello World");
     }
 
     @GetMapping("/goodbye")

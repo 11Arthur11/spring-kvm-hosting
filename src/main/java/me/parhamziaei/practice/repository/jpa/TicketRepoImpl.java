@@ -49,9 +49,9 @@ public class TicketRepoImpl implements TicketRepo {
     }
 
     @Override
-    public Optional<TicketMessageAttachment> findTicketAttachmentByAttachmentName(String fileName) {
-        return em.createQuery("SELECT tma FROM TicketMessageAttachment tma WHERE tma.fileName = :fileName", TicketMessageAttachment.class)
-                .setParameter("fileName", fileName)
+    public Optional<TicketMessageAttachment> findTicketAttachmentByStoredName(String storedName) {
+        return em.createQuery("SELECT tma FROM TicketMessageAttachment tma WHERE tma.storedName = :storedName", TicketMessageAttachment.class)
+                .setParameter("storedName", storedName)
                 .getResultList()
                 .stream()
                 .findFirst();

@@ -17,7 +17,7 @@ public interface TicketRepo {
 
     Optional<TicketMessage> addMessage(Long ticketId, TicketMessage ticketMessage);
 
-    Optional<TicketMessageAttachment> findTicketAttachmentByAttachmentName(String attachmentName);
+    Optional<TicketMessageAttachment> findTicketAttachmentByStoredName(String storedName);
 
     Optional<Ticket> findById(Long id);
 

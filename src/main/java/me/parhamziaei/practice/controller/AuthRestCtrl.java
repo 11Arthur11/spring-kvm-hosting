@@ -44,7 +44,7 @@ public class AuthRestCtrl {
     private final AuthenticationManager authenticationManager;
     private final MessageService messageService;
 
-    @Operation(summary = "if user twoFactorAuthenticate was enabled by user, user must send their 4 digit 2fa code in this endPoint, possible responses: 2")
+    @Operation(summary = "Validate TwoFactor verification code")
     @PostMapping("/2fa-verify")
     public ResponseEntity<?> twoFactorVerify(@RequestBody TwoFactorRequest twoFactorRequest, HttpServletRequest request, HttpServletResponse response) {
         alreadyLoggedInEvent(request);
@@ -96,7 +96,7 @@ public class AuthRestCtrl {
         );
     }
 
-    @Operation(summary = "Validating use login status with two possible response: 204=logged-in & 401=not-logged-in")
+    @Operation(summary = "Validating user auth information")
     @RequestMapping(value = "/validate", method = RequestMethod.HEAD)
     public ResponseEntity<?> validateLogin(HttpServletRequest request) {
         final String jwt = jwtService.extractJwtFromRequest(request);
@@ -107,7 +107,7 @@ public class AuthRestCtrl {
         }
     }
 
-    @Operation(summary = "login operation, login user using userEmail and password, possible responses: many")
+    @Operation(summary = "Login entry")
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         alreadyLoggedInEvent(request);
@@ -186,7 +186,7 @@ public class AuthRestCtrl {
 
     }
 
-    @Operation(summary = "register user with RegisterRequest then send a verification 6 digit code to user email, verify code must be send on /email-verify, possible responses: many")
+    @Operation(summary = "Register entry")
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest, HttpServletRequest request, HttpServletResponse response) {
         alreadyLoggedInEvent(request);
@@ -205,7 +205,7 @@ public class AuthRestCtrl {
         );
     }
 
-    @Operation(summary = "verify user email uses temp jwt cookie that was set in register or login with disabled account operation, possible responses: 2")
+    @Operation(summary = "Validate email verification code")
     @PostMapping("/email-verify")
     public ResponseEntity<?> verifyEmail(@RequestBody TwoFactorRequest twoFactorRequest, HttpServletRequest request, HttpServletResponse response) {
         alreadyLoggedInEvent(request);
@@ -250,7 +250,7 @@ public class AuthRestCtrl {
 
     }
 
-    @Operation(summary = "logout user and clear cookies and jwts, possible responses: 1")
+    @Operation(summary = "Logout operation and clear JWTs from client")
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response, HttpServletRequest request) {
         SecurityContextHolder.clearContext();
@@ -274,6 +274,7 @@ public class AuthRestCtrl {
         );
     }
 
+    @Operation(summary = "Resending email verification code if session wasn't expired")
     @PostMapping("/email-verify/resend")
     public ResponseEntity<?> resendEmailVerificationCode(HttpServletRequest request, HttpServletResponse response) {
         final String emailVerifyToken = jwtService.extractTwoFactorTokenFromRequest(request);
@@ -308,6 +309,7 @@ public class AuthRestCtrl {
         }
     }
 
+    @Operation(summary = "Resending TwoFactor verification code if session wasn't expired")
     @PostMapping("/2fa-verify/resend")
     public ResponseEntity<?> resendTwoFactorCode(HttpServletRequest request, HttpServletResponse response) {
         final String twoFactorToken = jwtService.extractTwoFactorTokenFromRequest(request);

@@ -9,8 +9,6 @@ import org.hibernate.validator.constraints.Length;
 @Getter
 public class ChangePasswordRequest {
 
-    private String userEmail = null;
-
     @NotBlank
     private String oldPassword;
 

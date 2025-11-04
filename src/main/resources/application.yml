@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: practice-06
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/prac06
+    username: admin
+    password: admin123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: javadtoktampz@gmail.com
+    password: null
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  threshold:
+    console: info
+  pattern:
+    console: "%d{HH:mm:ss.SSS} | %highlight(%-5level) | %logger{0} | %msg%n"
+
+app:
+  file:
+    image-properties:
+      ticket-attachments-path: /home/arthur/spring-boot/uploads/ticket-attachments
+      allowed-mime-type:
+        - image/png
+        - image/jpeg
+        - image/webp
+      maximum-image-size-mb: 10
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /docs
+
+initialize:
+  admin:
+    email: javadtoktamp@gmail.com
+    password: 12345678
+    fullname: parham ziaei
+
+security:
+  jwt_hs_256_key: f633915d212d5159e506d6d69f6d1adcad3aff7396b05545df48183e1331d537

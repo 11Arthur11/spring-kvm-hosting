@@ -1,11 +1,14 @@
 package me.parhamziaei.practice;
 
+import me.parhamziaei.practice.configuration.properties.ImageStorageProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @EnableAsync
 @SpringBootApplication
+@EnableConfigurationProperties(ImageStorageProperties.class)
 public class Practice06Application {
 
     public static void main(String[] args) {

@@ -13,6 +13,4 @@ public class TicketMessageRequest {
 
     private String content;
 
-    List<MultipartFile> files = new ArrayList<>();
-
 }

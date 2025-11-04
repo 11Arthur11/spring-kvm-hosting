@@ -26,15 +26,14 @@ public class UserRestCtrl {
     private final JwtService jwtService;
     private final MessageService messageService;
 
-    @Operation(summary = "User change password with old pass and new pass, possible responses: 2")
+    @Operation(summary = "User change password operation")
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest cpRequest, HttpServletRequest request) {
 
         final String accessToken = jwtService.extractJwtFromRequest(request);
         final String email = jwtService.extractUsername(accessToken);
 
-        cpRequest.setUserEmail(email);
-        final boolean passwordChanged = userService.changePasswordAndGetResult(cpRequest);
+        final boolean passwordChanged = userService.changePasswordAndGetResult(cpRequest, email);
 
         if (passwordChanged) {
             return ResponseBuilder.buildSuccess(

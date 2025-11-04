@@ -1,6 +1,8 @@
 package me.parhamziaei.practice.service;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import me.parhamziaei.practice.dto.internal.ImageInternal;
 import me.parhamziaei.practice.dto.request.TicketMessageRequest;
 import me.parhamziaei.practice.dto.request.TicketRequest;
 import me.parhamziaei.practice.dto.response.TicketAttachmentResponse;
@@ -15,11 +17,15 @@ import me.parhamziaei.practice.exception.custom.service.TicketServiceException;
 import me.parhamziaei.practice.repository.jpa.TicketRepo;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class TicketService {
 
@@ -35,19 +41,13 @@ public class TicketService {
         maxTicketAttachments = Integer.parseInt(env.getProperty("app.ticket.max-message-attachments", "5"));
     }
 
-    @Transactional
-    public Optional<String> getAttachmentOwner(String attachmentName) {
-        Optional<TicketMessageAttachment> attachment = ticketRepo.findTicketAttachmentByAttachmentName(attachmentName);
-        return attachment.map(ticketMessageAttachment -> ticketMessageAttachment.getTicketMessage().getTicket().getSubmitterEmail());
-    }
-
     private boolean isTicketOwner(Optional<Ticket> ticket, String userEmail) {
         return ticket.map(t -> userEmail.equals(t.getSubmitterEmail())).orElse(false);
     }
 
     @Transactional
-    public void addNewMessage(TicketMessageRequest ticketMessageRequest, String email, String senderRole, Long ticketId) {
-        if (ticketMessageRequest.getFiles().size() > maxTicketAttachments)  {
+    public void addNewMessage(TicketMessageRequest ticketMessageRequest, String email, String senderRole, Long ticketId, List<MultipartFile> files) {
+        if (files.size() > maxTicketAttachments)  {
             throw new TicketMaxAttachmentReachedException("Maximum number of ticket attachments reached. limit is: " + maxTicketAttachments);
         }
         Optional<Ticket> loadedTicket = ticketRepo.findById(ticketId);
@@ -57,17 +57,30 @@ public class TicketService {
             TicketMessage newTicketMessage = TicketMessage.builder()
                     .message(ticketMessageRequest.getContent())
                     .senderFullName(ticket.getSubmitterFullName())
+                    .senderRole(senderRole)
                     .build();
 
-            if (ticketMessageRequest.getFiles().isEmpty()) {
+            if (files.isEmpty()) {
                 ticket.getMessages().add(newTicketMessage);
                 ticketRepo.addMessage(ticket.getId(), newTicketMessage);
+                return;
             }
+
             Optional<TicketMessage> dbTicketMessage = ticketRepo.addMessage(ticket.getId(), newTicketMessage);
 
-            dbTicketMessage.ifPresent(loadedTicketMessage -> ticketMessageRequest.getFiles().forEach(file -> {
-                String attachmentName = fileStorageService.storeTicketAttachment(file);
-                TicketMessageAttachment attachment = new TicketMessageAttachment(attachmentName, loadedTicketMessage);
+            dbTicketMessage.ifPresent(loadedTicketMessage -> files.forEach(file -> {
+                String storedPath = fileStorageService.storeTicketAttachment(file);
+
+                TicketMessageAttachment attachment = TicketMessageAttachment.builder()
+                        .originalName(file.getOriginalFilename())
+                        .storedPath(storedPath)
+                        .storedName(Paths.get(storedPath).getFileName().toString())
+                        .size(file.getSize())
+                        .mimeType(file.getContentType())
+                        .ownerEmail(email)
+                        .ticketMessage(loadedTicketMessage)
+                        .build();
+
                 loadedTicketMessage.addAttachment(attachment);
             }));
 
@@ -86,7 +99,13 @@ public class TicketService {
             ticket.getMessages().forEach(ticketMessage -> {
                 Set<TicketAttachmentResponse> attachmentsDTO = ticketMessage.getAttachments()
                         .stream()
-                        .map(att -> new TicketAttachmentResponse(att.getFileName()))
+                        .map(att ->
+                                TicketAttachmentResponse.builder()
+                                        .originalName(att.getOriginalName())
+                                        .size(att.getSize())
+                                        .storedName(att.getStoredName())
+                                        .build()
+                        )
                         .collect(Collectors.toSet());
 
                 TicketMessageResponse messageDTO = modelMapper.map(ticketMessage, TicketMessageResponse.class);
@@ -107,7 +126,7 @@ public class TicketService {
     }
 
     @Transactional
-    public void addTicket(TicketRequest request) {
+    public void addTicket(TicketRequest request, List<MultipartFile> files) {
         String relatedServiceName = null;
         if (request.getServiceId() != null) {
             //todo make a check if entered service belong to user or not, if not throw TicketServiceException()
@@ -123,7 +142,7 @@ public class TicketService {
                 .build();
 
         ticketRepo.save(ticket);
-        addNewMessage(request.getMessage(), request.getSubmitterEmail(), "USER", ticket.getId());
+        addNewMessage(request.getMessage(), request.getSubmitterEmail(), "USER", ticket.getId(), files);
     }
 
     public List<TicketResponse> getUserTickets(String userEmail) {
@@ -137,6 +156,25 @@ public class TicketService {
             ticketsDTO.add(ticketResponse);
         });
         return ticketsDTO;
+    }
+
+    public ImageInternal getTicketAttachment(String attachmentIdentifier, String userEmail) {
+        Optional<TicketMessageAttachment> dbAttachment = ticketRepo.findTicketAttachmentByStoredName(attachmentIdentifier);
+        if (dbAttachment.isPresent()) {
+            TicketMessageAttachment attachment = dbAttachment.get();
+            Optional<Resource> imageResource = fileStorageService.loadTicketAttachment(attachment);
+            if (attachment.getOwnerEmail().equals(userEmail) && imageResource.isPresent()) {
+                return ImageInternal.builder()
+                        .image(imageResource.get())
+                        .originalName(attachment.getOriginalName())
+                        .size(attachment.getSize())
+                        .mimeType(attachment.getMimeType())
+                        .storedName(attachment.getStoredName())
+                        .build();
+            }
+        }
+        log.warn("Ticket attachment not found or permission missing, user: {}, fileName: {}", userEmail, attachmentIdentifier);
+        throw new TicketServiceException("Attachment not found or permission denied.");
     }
 
 }
