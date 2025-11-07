@@ -1,17 +1,17 @@
-package me.parhamziaei.practice.controller;
+package me.parhamziaei.practice.controller.user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.internal.ImageInternal;
-import me.parhamziaei.practice.dto.request.TicketMessageRequest;
-import me.parhamziaei.practice.dto.request.TicketRequest;
-import me.parhamziaei.practice.dto.response.TicketDetailResponse;
-import me.parhamziaei.practice.dto.response.TicketResponse;
-import me.parhamziaei.practice.entity.jpa.Ticket;
-import me.parhamziaei.practice.entity.jpa.TicketMessage;
+import me.parhamziaei.practice.dto.request.ticket.TicketMessageRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketRequest;
+import me.parhamziaei.practice.dto.response.ticket.TicketDetailResponse;
+import me.parhamziaei.practice.dto.response.ticket.TicketResponse;
 import me.parhamziaei.practice.entity.jpa.User;
+import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.service.JwtService;
+import me.parhamziaei.practice.service.MessageService;
 import me.parhamziaei.practice.service.TicketService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.ResponseBuilder;
@@ -25,11 +25,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/tickets")
-public class TicketRestCtrl {
+public class TicketController {
 
     private final TicketService ticketService;
     private final UserService userService;
     private final JwtService jwtService;
+    private final MessageService messageService;
 
     @Operation(summary = "Getting all user tickets as list")
     @GetMapping
@@ -41,7 +42,7 @@ public class TicketRestCtrl {
         if (userTickets.isEmpty()) {
             return ResponseBuilder.buildFailed(
                     "NO_DATA",
-                    "", //todo language enum reminder!
+                    null,
                     HttpStatus.NOT_FOUND
             );
         }
@@ -90,7 +91,7 @@ public class TicketRestCtrl {
         ticketService.addNewMessage(ticketMessageRequest, user.getEmail(), "USER",ticketId, files);
         return ResponseBuilder.buildSuccess(
                 "SUCCESS",
-                "", //todo language enum reminder!
+                messageService.get(Message.SERVICE_TICKET_MESSAGE_SENT),
                 HttpStatus.OK
         );
     }

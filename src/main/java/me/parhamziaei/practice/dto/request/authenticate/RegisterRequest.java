@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.dto.request;
+package me.parhamziaei.practice.dto.request.authenticate;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

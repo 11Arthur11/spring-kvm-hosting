@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.enums.Message;
+import me.parhamziaei.practice.enums.Text;
 import me.parhamziaei.practice.exception.custom.service.EmailServiceException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -34,7 +35,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(to);
-            helper.setSubject(messageService.get(Message.MAIL_TITLE_EMAIL_TWO_FACTOR));
+            helper.setSubject(messageService.get(Text.MAIL_TITLE_EMAIL_TWO_FACTOR));
             helper.setText(template, true);
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
@@ -56,7 +57,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(to);
-            helper.setSubject(messageService.get(Message.MAIL_TITLE_EMAIL_VERIFICATION));
+            helper.setSubject(messageService.get(Text.MAIL_TITLE_EMAIL_VERIFICATION));
             helper.setText(template, true);
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
@@ -64,5 +65,26 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendForgotPasswordCodeEmail(String to, String code) {
+        try {
+            char[] codeArray = code.toCharArray();
+
+            Context context = new Context();
+            context.setVariable("code", codeArray);
+
+            String template = templateEngine.process("forgot-password-email", context);
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(messageService.get(Text.MAIL_TITLE_FORGOT_PASSWORD));
+            helper.setText(template, true);
+            mailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            throw new EmailServiceException(e.getMessage());
+        }
+    }
 
 }

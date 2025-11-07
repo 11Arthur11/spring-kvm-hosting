@@ -1,6 +1,7 @@
 package me.parhamziaei.practice.configuration;
 
 import me.parhamziaei.practice.entity.redis.EmailVerifySession;
+import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
 import me.parhamziaei.practice.entity.redis.TwoFactorSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,10 +27,18 @@ public class RedisConfiguration {
     }
 
     @Bean
-    public RedisTemplate<String, EmailVerifySession> registerVerifyLink(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, EmailVerifySession> emailVerifyRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, EmailVerifySession> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(EmailVerifySession.class));
+        return redisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<String, ForgotPasswordSession> forgotPasswordRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, ForgotPasswordSession> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(ForgotPasswordSession.class));
         return redisTemplate;
     }
 

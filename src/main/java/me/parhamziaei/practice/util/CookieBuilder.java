@@ -12,13 +12,13 @@ public class CookieBuilder {
 
     // todo make this true in production phase
     private static final boolean SECURE_COOKIE_ENABLED = false;
-    private static final Duration TWO_FACTOR_COOKIE_EXPIRE = Duration.ofSeconds(3600);
+
 
     public static Cookie twoFactorCookie(String token) {
         Cookie cookie = new Cookie("2FA", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge((int) TWO_FACTOR_COOKIE_EXPIRE.toSeconds());
+        cookie.setMaxAge((int) SecurityUtil.TWO_FACTOR_COOKIE_EXPIRE.toSeconds());
         cookie.setSecure(SECURE_COOKIE_ENABLED);
         cookie.setAttribute("SameSite", "Strict");
         return cookie;

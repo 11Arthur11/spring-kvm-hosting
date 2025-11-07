@@ -18,6 +18,7 @@ public enum Message {
     TWO_FACTOR_EMAIL_VERIFY_SEND("success.2fa.email_verify.send"),
     TWO_FACTOR_INVALID("error.2fa.invalid"),
     TWO_FACTOR_RESEND_SESSION_EXPIRED("error.2fa.resend_session_expired"),
+    TWO_FACTOR_FORGOT_PASSWORD_CODE_SEND("success.2fa.forgot_password_code_send"),
 
     REGISTER_SUCCESSFULLY_DONE("success.register.user_registered"),
     REGISTER_EMAIL_ALREADY_TAKEN("error.register.email_already_taken"),
@@ -32,8 +33,12 @@ public enum Message {
     USER_PASSWORD_CHANGE_SUCCESS("success.user.password_change"),
     USER_PASSWORD_CHANGE_FAILED("failed.user.password_change"),
 
-    MAIL_TITLE_EMAIL_VERIFICATION("mail.title.email_verification"),
-    MAIL_TITLE_EMAIL_TWO_FACTOR("mail.title.two_factor_code");
+    SERVICE_FILE_STORAGE_ERROR("error.service.file.storage"),
+    SERVICE_PAYLOAD_TOO_LARGE("error.service.file.payload-too-large"),
+    SERVICE_MEDIA_TYPE_NOT_ALLOWED("error.service.file.type-not-allowed"),
+
+    SERVICE_TICKET_MAX_ATTACHMENT_REACHED("error.service.ticket.max_attachment_reached"),
+    SERVICE_TICKET_MESSAGE_SENT("success.service.ticket.message_sent");
 
     private final String key;
 

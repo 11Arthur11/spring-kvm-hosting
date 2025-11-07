@@ -1,10 +1,10 @@
-package me.parhamziaei.practice.controller;
+package me.parhamziaei.practice.controller.user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.dto.request.ChangePasswordRequest;
+import me.parhamziaei.practice.dto.request.authenticate.ChangePasswordRequest;
 import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.service.JwtService;
 import me.parhamziaei.practice.service.MessageService;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
-public class UserRestCtrl {
+public class UserController {
 
     private final UserService userService;
     private final JwtService jwtService;

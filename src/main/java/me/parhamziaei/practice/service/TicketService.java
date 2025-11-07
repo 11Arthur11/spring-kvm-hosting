@@ -1,22 +1,24 @@
 package me.parhamziaei.practice.service;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.parhamziaei.practice.configuration.properties.TicketServiceProperties;
 import me.parhamziaei.practice.dto.internal.ImageInternal;
-import me.parhamziaei.practice.dto.request.TicketMessageRequest;
-import me.parhamziaei.practice.dto.request.TicketRequest;
-import me.parhamziaei.practice.dto.response.TicketAttachmentResponse;
-import me.parhamziaei.practice.dto.response.TicketDetailResponse;
-import me.parhamziaei.practice.dto.response.TicketMessageResponse;
-import me.parhamziaei.practice.dto.response.TicketResponse;
+import me.parhamziaei.practice.dto.request.ticket.TicketMessageRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketRequest;
+import me.parhamziaei.practice.dto.response.ticket.TicketAttachmentResponse;
+import me.parhamziaei.practice.dto.response.ticket.TicketDetailResponse;
+import me.parhamziaei.practice.dto.response.ticket.TicketMessageResponse;
+import me.parhamziaei.practice.dto.response.ticket.TicketResponse;
 import me.parhamziaei.practice.entity.jpa.Ticket;
 import me.parhamziaei.practice.entity.jpa.TicketMessage;
 import me.parhamziaei.practice.entity.jpa.TicketMessageAttachment;
+import me.parhamziaei.practice.enums.Text;
 import me.parhamziaei.practice.exception.custom.service.TicketMaxAttachmentReachedException;
 import me.parhamziaei.practice.exception.custom.service.TicketServiceException;
 import me.parhamziaei.practice.repository.jpa.TicketRepo;
 import org.modelmapper.ModelMapper;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,19 +29,15 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TicketService {
 
     private final TicketRepo ticketRepo;
     private final ModelMapper modelMapper;
     private final FileStorageService fileStorageService;
-    private final int maxTicketAttachments;
+    private final MessageService messageService;
+    private final TicketServiceProperties properties;
 
-    public TicketService(TicketRepo ticketRepo, ModelMapper modelMapper, FileStorageService fileStorageService, Environment env) {
-        this.ticketRepo = ticketRepo;
-        this.modelMapper = modelMapper;
-        this.fileStorageService = fileStorageService;
-        maxTicketAttachments = Integer.parseInt(env.getProperty("app.ticket.max-message-attachments", "5"));
-    }
 
     private boolean isTicketOwner(Optional<Ticket> ticket, String userEmail) {
         return ticket.map(t -> userEmail.equals(t.getSubmitterEmail())).orElse(false);
@@ -47,8 +45,8 @@ public class TicketService {
 
     @Transactional
     public void addNewMessage(TicketMessageRequest ticketMessageRequest, String email, String senderRole, Long ticketId, List<MultipartFile> files) {
-        if (files.size() > maxTicketAttachments)  {
-            throw new TicketMaxAttachmentReachedException("Maximum number of ticket attachments reached. limit is: " + maxTicketAttachments);
+        if (files.size() > properties.maxAttachmentPerMessage())  {
+            throw new TicketMaxAttachmentReachedException("Maximum number of ticket attachments reached. limit is: " + properties.maxAttachmentPerMessage());
         }
         Optional<Ticket> loadedTicket = ticketRepo.findById(ticketId);
         if (loadedTicket.isPresent() && isTicketOwner(loadedTicket, email)) {
@@ -85,7 +83,7 @@ public class TicketService {
             }));
 
         } else {
-            throw new TicketServiceException("Ticket not found or permission denied.");
+            throw new TicketServiceException("Ticket not found or permission missing.");
         }
     }
 
@@ -101,9 +99,9 @@ public class TicketService {
                         .stream()
                         .map(att ->
                                 TicketAttachmentResponse.builder()
-                                        .originalName(att.getOriginalName())
+                                        .attachmentName(att.getOriginalName())
                                         .size(att.getSize())
-                                        .storedName(att.getStoredName())
+                                        .identifier(att.getStoredName())
                                         .build()
                         )
                         .collect(Collectors.toSet());
@@ -136,7 +134,7 @@ public class TicketService {
                 .subject(request.getSubject())
                 .department(request.getDepartment())
                 .serviceName(relatedServiceName)
-                .status("PENDING")
+                .status(messageService.get(Text.TICKET_STATUS_PENDING))
                 .submitterEmail(request.getSubmitterEmail())
                 .submitterFullName(request.getSubmitterFullName())
                 .build();

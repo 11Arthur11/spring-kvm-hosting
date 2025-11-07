@@ -1,8 +1,8 @@
 package me.parhamziaei.practice.util;
 
 import me.parhamziaei.practice.dto.internal.ImageInternal;
-import me.parhamziaei.practice.dto.response.DataResponse;
-import me.parhamziaei.practice.dto.response.SimpleResponse;
+import me.parhamziaei.practice.dto.response.global.DataResponse;
+import me.parhamziaei.practice.dto.response.global.SimpleResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

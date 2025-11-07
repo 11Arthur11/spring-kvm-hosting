@@ -21,4 +21,16 @@ public class MessageConfiguration {
         return messageSource;
     }
 
+    @Bean
+    public MessageSource textSource() {
+        ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+        messageSource.setBasenames(
+                "file:./config/texts",
+                "classpath:texts"
+        );
+        messageSource.setDefaultEncoding("UTF-8");
+        return messageSource;
+    }
+
+
 }

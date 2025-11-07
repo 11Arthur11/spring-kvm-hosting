@@ -1,17 +1,20 @@
 package me.parhamziaei.practice.service;
 
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.dto.request.ChangePasswordRequest;
-import me.parhamziaei.practice.dto.request.RegisterRequest;
+import me.parhamziaei.practice.dto.request.authenticate.ChangePasswordRequest;
+import me.parhamziaei.practice.dto.request.authenticate.ForgotPasswordRequest;
+import me.parhamziaei.practice.dto.request.authenticate.RegisterRequest;
 import me.parhamziaei.practice.entity.jpa.Role;
 import me.parhamziaei.practice.entity.jpa.User;
 import me.parhamziaei.practice.entity.jpa.UserSetting;
 import me.parhamziaei.practice.entity.jpa.Wallet;
+import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
+import me.parhamziaei.practice.enums.Roles;
 import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenException;
+import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
 import me.parhamziaei.practice.repository.jpa.RoleRepo;
 import me.parhamziaei.practice.repository.jpa.UserRepo;
-import me.parhamziaei.practice.repository.redis.EmailVerifyRepo;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,9 +30,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
-    private final EmailVerifyRepo emailVerifyRepo;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -45,8 +46,8 @@ public class UserService implements UserDetailsService {
     }
 
     public void initDefaultAdmin(RegisterRequest registerRequest) {
-        Role userRole = roleRepo.findByName("ROLE_USER");
-        Role adminRole = roleRepo.findByName("ROLE_ADMIN");
+        Role userRole = roleRepo.findByName(Roles.USER.getName());
+        Role adminRole = roleRepo.findByName(Roles.ADMIN.getName());
         Wallet wallet = new Wallet();
         UserSetting userSetting = new UserSetting();
         User user = User.builder()
@@ -65,7 +66,7 @@ public class UserService implements UserDetailsService {
 
     public boolean changePasswordAndGetResult(ChangePasswordRequest cpRequest, String userEmail) {
         if (!cpRequest.getNewPasswordConfirm().equals(cpRequest.getNewPassword())) {
-            throw new PasswordPolicyException("PASSWORD_CANNOT_BE_CHANGED");
+            throw new PasswordPolicyException();
         }
         User user = (User) loadUserByUsername(userEmail);
         if (passwordEncoder.matches(cpRequest.getOldPassword(), user.getPassword())) {
@@ -77,15 +78,24 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public void changeForgottenPassword(ForgotPasswordRequest fpRequest, ForgotPasswordSession fpSession) {
+        if (!fpRequest.getNewPasswordConfirm().equals(fpRequest.getNewPassword())) {
+            throw new PasswordPolicyException();
+        }
+        User user = (User) loadUserByUsername(fpSession.getUserEmail());
+        user.setPassword(passwordEncoder.encode(fpRequest.getNewPassword()));
+        userRepo.update(user);
+    }
+
     public void register(RegisterRequest registerRequest) {
         if (!isEmailValid(registerRequest.getEmail())) {
             throw new EmailAlreadyTakenException();
         }
         if (!registerRequest.getRawPassword().equals(registerRequest.getRawPasswordConfirm())) {
-            throw new PasswordPolicyException("PASSWORDS_DONT_MATCH");
+            throw new PasswordPolicyException();
         }
 
-        Role role = roleRepo.findByName("ROLE_USER");
+        Role role = roleRepo.findByName(Roles.USER.getName());
         Wallet wallet = new Wallet();
         UserSetting userSetting = new UserSetting();
         User user = User.builder()
@@ -113,7 +123,7 @@ public class UserService implements UserDetailsService {
         if (user != null) {
             return user.getSetting().isTwoFAEnabled();
         }
-        throw new UsernameNotFoundException("USER_NOT_FOUND");
+        throw new UsernameNotFoundException("User not found");
     }
 
     public Set<Role> getRoles(String email) {

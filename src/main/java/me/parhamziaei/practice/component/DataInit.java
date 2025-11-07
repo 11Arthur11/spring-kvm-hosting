@@ -1,55 +1,59 @@
 package me.parhamziaei.practice.component;
 
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.dto.request.RegisterRequest;
+import lombok.extern.slf4j.Slf4j;
+import me.parhamziaei.practice.configuration.properties.AuthorizationProperties;
+import me.parhamziaei.practice.configuration.properties.RuntimeInitProperties;
+import me.parhamziaei.practice.dto.request.authenticate.RegisterRequest;
 import me.parhamziaei.practice.entity.jpa.Role;
+import me.parhamziaei.practice.enums.Roles;
 import me.parhamziaei.practice.repository.jpa.RoleRepo;
 import me.parhamziaei.practice.service.UserService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class DataInit implements CommandLineRunner {
 
     private final RoleRepo roleRepo;
     private final UserService userService;
-
-    @Value("${initialize.admin.email}")
-    String adminEmail;
-    @Value("${initialize.admin.password}")
-    String adminPassword;
-    @Value("${initialize.admin.fullname}")
-    String adminFullName;
+    private final RuntimeInitProperties initProperties;
+    private final AuthorizationProperties authorizeProperties;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         initRoles();
         initAdmin();
     }
 
     public void initRoles() {
-        if (roleRepo.findAll().isEmpty()) {
-            Role adminRole = new Role("ROLE_ADMIN");
-            Role userRole = new Role("ROLE_USER");
-            roleRepo.save(adminRole);
-            roleRepo.save(userRole);
-        }
+        List<String> dbRoles = roleRepo.findAll().stream().map(Role::getName).toList();
+        List<String> internalRoles = Arrays.stream(Roles.values()).map(Roles::getName).toList();
+        internalRoles.forEach(role -> {
+            if (!dbRoles.contains(role)) {
+                roleRepo.save(new Role(role));
+                log.info("Role ({}) created by system", role);
+            }
+        });
     }
 
     public void initAdmin() {
         try {
-            UserDetails user = userService.loadUserByUsername(adminEmail);
+            UserDetails user = userService.loadUserByUsername(initProperties.adminEmail());
         } catch (UsernameNotFoundException e) {
             RegisterRequest request = RegisterRequest
                     .builder()
-                    .email(adminEmail)
-                    .rawPassword(adminPassword)
-                    .rawPasswordConfirm(adminPassword)
-                    .fullName(adminFullName)
+                    .email(initProperties.adminEmail())
+                    .rawPassword(initProperties.adminPassword())
+                    .rawPasswordConfirm(initProperties.adminPassword())
+                    .fullName(initProperties.adminFullName())
                     .build();
 
             userService.initDefaultAdmin(request);

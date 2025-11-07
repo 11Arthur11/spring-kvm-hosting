@@ -24,7 +24,11 @@ public class RoleRepoImpl implements RoleRepo {
     }
 
     public Role findByName(String roleName) {
-        return em.createQuery("SELECT r FROM Role r WHERE r.name = :roleName", Role.class).setParameter("roleName", roleName).getSingleResult();
+        try {
+            return em.createQuery("SELECT r FROM Role r WHERE r.name = :roleName", Role.class).setParameter("roleName", roleName).getSingleResult();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 }

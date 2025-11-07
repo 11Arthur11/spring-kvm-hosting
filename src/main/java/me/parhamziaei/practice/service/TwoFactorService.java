@@ -2,10 +2,12 @@ package me.parhamziaei.practice.service;
 
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.entity.redis.EmailVerifySession;
+import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
 import me.parhamziaei.practice.entity.redis.TwoFactorSession;
 import me.parhamziaei.practice.exception.custom.authenticate.InvalidEmailVerifyCodeException;
 import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.repository.redis.EmailVerifyRepo;
+import me.parhamziaei.practice.repository.redis.ForgotPasswordRepo;
 import me.parhamziaei.practice.repository.redis.TwoFactorRepo;
 import me.parhamziaei.practice.util.SecurityUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +26,7 @@ public class TwoFactorService {
     private final TwoFactorRepo twoFactorRepo;
     private final EmailService emailService;
     private final EmailVerifyRepo emailVerifyRepo;
+    private final ForgotPasswordRepo forgotPasswordRepo;
 
     public TwoFactorSession verifyAndGetSession(String twoFactorJwt, String code) {
         String sessionId = jwtService.extractSessionIdFromTwoFactorToken(twoFactorJwt);
@@ -89,7 +92,7 @@ public class TwoFactorService {
                 }
             }
         }
-        throw new InvalidEmailVerifyCodeException();
+        throw new InvalidTwoFactorException();
     }
 
     public String sendTwoFactor(String email, boolean isRememberMe) {
@@ -108,4 +111,49 @@ public class TwoFactorService {
         return sessionId;
     }
 
+    public ForgotPasswordSession validateAndGetForgotPasswordSession(String twoFactorJwt, String code) {
+        if (jwtService.isTwoFactorTokenValid(twoFactorJwt)) {
+            final String sessionId = jwtService.extractSessionIdFromTwoFactorToken(twoFactorJwt);
+            final ForgotPasswordSession session = forgotPasswordRepo.get(sessionId);
+            if (session != null) {
+                if (
+                        encoder.matches(code, session.getCode()) &&
+                        session.getAttempts() < 3 &&
+                        session.getUserEmail().equals(jwtService.extractUsername(twoFactorJwt))
+                ) {
+                    emailVerifyRepo.remove(sessionId);
+                    return session;
+                } else {
+                    session.setAttempts(session.getAttempts() + 1);
+                    forgotPasswordRepo.save(sessionId, session);
+                }
+            }
+        }
+        throw new InvalidTwoFactorException();
+    }
+
+    public String sendForgotPasswordCode(String email) {
+        SecureRandom random = new SecureRandom();
+        ForgotPasswordSession session = ForgotPasswordSession.builder()
+                .attempts(0)
+                .userEmail(email)
+                .code(String.format("%06d", random.nextInt(1000000)))
+                .build();
+
+        emailService.sendForgotPasswordCodeEmail(email, session.getCode());
+        session.setCode(encoder.encode(session.getCode()));
+        String sessionId = UUID.randomUUID().toString();
+        forgotPasswordRepo.save(sessionId, session, SecurityUtil.FORGOT_PASSWORD_SESSION_TTL);
+        return sessionId;
+    }
+
+    public boolean hasActiveForgotPasswordSession(String sessionId) {
+        return forgotPasswordRepo.get(sessionId) != null;
+    }
+
+    public boolean hasActiveSession(String sessionId) {
+        return forgotPasswordRepo.get(sessionId) != null
+                || emailVerifyRepo.get(sessionId) != null
+                || twoFactorRepo.get(sessionId) != null;
+    }
 }

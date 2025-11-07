@@ -4,8 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.parhamziaei.practice.configuration.properties.ImageStorageProperties;
 import me.parhamziaei.practice.entity.jpa.TicketMessageAttachment;
 import me.parhamziaei.practice.exception.custom.service.FileStorageServiceException;
-import me.parhamziaei.practice.exception.custom.service.ImageTooLargeException;
-import me.parhamziaei.practice.exception.custom.service.ImageTypeNotAllowedException;
+import me.parhamziaei.practice.exception.custom.service.MediaSizeTooLargeException;
+import me.parhamziaei.practice.exception.custom.service.MediaTypeNotAllowedException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -29,22 +29,21 @@ public class FileStorageService {
 
     private final ImageStorageProperties imageProperties;
     private final Path imagePath;
-    private final Set<String> allowedImageExtensions;
-    private final Set<String> allowedImageMimeType;
+    private final Set<String> allowedMediaExtensions;
+    private final Set<String> allowedMediaMimeType;
 
     public FileStorageService(ImageStorageProperties imageProperties) {
         this.imageProperties = imageProperties;
         this.imagePath = Paths.get(imageProperties.ticketAttachmentsPath());
-        this.allowedImageExtensions = imageProperties.allowedMimeType().stream()
+        this.allowedMediaExtensions = imageProperties.allowedMediaMimeType().stream()
                 .filter(m -> m.contains("/"))
                 .map(m -> m.substring(m.indexOf("/") + 1))
                 .collect(Collectors.toSet());
-        this.allowedImageMimeType = imageProperties.allowedMimeType();
+        this.allowedMediaMimeType = imageProperties.allowedMediaMimeType();
         try {
-            System.out.println(imagePath.toAbsolutePath());
             Files.createDirectories(imagePath);
         } catch (IOException e) {
-            log.error("Could not create storage directories {}", e.getMessage());
+            log.error("Could not create storage directories {}", imagePath, e);
         }
     }
 
@@ -62,7 +61,7 @@ public class FileStorageService {
     }
 
     private boolean isImageSizeAllowed(MultipartFile file) {
-        double allowedSizeByte = imageProperties.maximumImageSizeMb() * 1024.0 * 1024.0;
+        double allowedSizeByte = imageProperties.maximumMediaSizeMb() * 1024.0 * 1024.0;
         return file.getSize() < allowedSizeByte;
     }
 
@@ -70,15 +69,15 @@ public class FileStorageService {
         String mimeType = file.getContentType();
         String extension = getFileExtension(file.getOriginalFilename());
 
-        return allowedImageExtensions.contains(extension) && allowedImageMimeType.contains(mimeType);
+        return allowedMediaExtensions.contains(extension) && allowedMediaMimeType.contains(mimeType);
     }
 
     public String storeTicketAttachment(MultipartFile file) {
         if (!isImageSizeAllowed(file)) {
-            throw new ImageTooLargeException();
+            throw new MediaSizeTooLargeException();
         }
         if (!isImageTypeAllowed(file)) {
-            throw new ImageTypeNotAllowedException();
+            throw new MediaTypeNotAllowedException();
         }
 
         LocalDate today = LocalDate.now();

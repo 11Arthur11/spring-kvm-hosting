@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.dto.response;
+package me.parhamziaei.practice.dto.response.user;
 
 import lombok.*;
 

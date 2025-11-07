@@ -121,17 +121,12 @@ public class JwtService {
             String sessionId,
             boolean rememberMe
     ) {
-        HashMap<String, Object> claims = new HashMap<>();
-        claims.put("purpose", "LOGIN");
-        claims.put("remember_me", rememberMe);
-        claims.put("session_id", sessionId);
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userEmail)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + SecurityUtil.TWO_FACTOR_TOKEN_TTL.toMillis()))
-                .signWith(SignatureAlgorithm.HS256, getSignKey())
-                .compact();
+        return generateTwoFactorToken(
+                userEmail,
+                sessionId,
+                rememberMe,
+                new Date(System.currentTimeMillis() + SecurityUtil.TWO_FACTOR_TOKEN_TTL.toMillis())
+        );
     }
 
     public String generateTwoFactorToken(
@@ -141,7 +136,7 @@ public class JwtService {
             Date expiresIn
     ) {
         HashMap<String, Object> claims = new HashMap<>();
-        claims.put("purpose", "LOGIN");
+        claims.put("purpose", "TF");
         claims.put("remember_me", rememberMe);
         claims.put("session_id", sessionId);
         return Jwts.builder()
@@ -157,16 +152,11 @@ public class JwtService {
             String userEmail,
             String sessionId
     ) {
-        HashMap<String, Object> claims = new HashMap<>();
-        claims.put("purpose", "EMAIL_VERIFY");
-        claims.put("session_id", sessionId);
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userEmail)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + SecurityUtil.EMAIL_VERIFY_SESSION_TTL.toMillis()))
-                .signWith(SignatureAlgorithm.HS256, getSignKey())
-                .compact();
+        return generateEmailVerifyToken(
+                userEmail,
+                sessionId,
+                new Date(System.currentTimeMillis() + SecurityUtil.EMAIL_VERIFY_SESSION_TTL.toMillis())
+        );
     }
 
     public String generateEmailVerifyToken(
@@ -175,7 +165,35 @@ public class JwtService {
             Date expiresIn
     ) {
         HashMap<String, Object> claims = new HashMap<>();
-        claims.put("purpose", "EMAIL_VERIFY");
+        claims.put("purpose", "EV");
+        claims.put("session_id", sessionId);
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userEmail)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(expiresIn)
+                .signWith(SignatureAlgorithm.HS256, getSignKey())
+                .compact();
+    }
+
+    public String generateForgotPasswordToken(
+            String userEmail,
+            String sessionId
+    ) {
+        return generateForgotPasswordToken(
+                userEmail,
+                sessionId,
+                new Date(System.currentTimeMillis() + SecurityUtil.FORGOT_PASSWORD_JWT_TTL.toMillis())
+        );
+    }
+
+    public String generateForgotPasswordToken(
+            String userEmail,
+            String sessionId,
+            Date expiresIn
+    ) {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("purpose", "FP");
         claims.put("session_id", sessionId);
         return Jwts.builder()
                 .setClaims(claims)
@@ -261,16 +279,16 @@ public class JwtService {
         }
     }
 
+    public boolean extractRememberMeFromTwoFactorToken(String token) {
+        return extractClaim(token, claims -> claims.get("remember_me", Boolean.class));
+    }
+
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
-    }
-
-    public boolean extractRememberMeFromTwoFactorToken(String token) {
-        return extractClaim(token, claims -> claims.get("remember_me", Boolean.class));
     }
 
     public String extractSessionIdFromTwoFactorToken(String token) {

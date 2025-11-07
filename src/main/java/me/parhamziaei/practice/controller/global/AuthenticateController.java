@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.controller;
+package me.parhamziaei.practice.controller.global;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
@@ -6,9 +6,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.dto.request.LoginRequest;
-import me.parhamziaei.practice.dto.request.RegisterRequest;
-import me.parhamziaei.practice.dto.request.TwoFactorRequest;
+import lombok.extern.slf4j.Slf4j;
+import me.parhamziaei.practice.dto.request.authenticate.ForgotPasswordRequest;
+import me.parhamziaei.practice.dto.request.authenticate.LoginRequest;
+import me.parhamziaei.practice.dto.request.authenticate.RegisterRequest;
+import me.parhamziaei.practice.dto.request.authenticate.TwoFactorRequest;
+import me.parhamziaei.practice.entity.jpa.User;
+import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
 import me.parhamziaei.practice.entity.redis.TwoFactorSession;
 import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.exception.custom.authenticate.AlreadyLoggedInException;
@@ -32,11 +36,14 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-public class AuthRestCtrl {
+public class AuthenticateController {
 
     private final UserService userService;
     private final JwtService jwtService;
@@ -157,7 +164,7 @@ public class AuthRestCtrl {
             response.addCookie(twoFactorCookie);
 
             return ResponseBuilder.buildSuccess(
-                    "2FA_SENT",
+                    "CODE_SENT",
                     messageService.get(Message.TWO_FACTOR_SENT),
                     auth.getName(),
                     HttpStatus.OK
@@ -198,7 +205,7 @@ public class AuthRestCtrl {
         response.addCookie(CookieBuilder.twoFactorCookie(twoFactorToken));
 
         return ResponseBuilder.buildSuccess(
-                "EMAIL_VERIFY_SENT",
+                "CODE_SENT",
                 messageService.get(Message.TWO_FACTOR_EMAIL_VERIFY_SEND),
                 email,
                 HttpStatus.OK
@@ -296,7 +303,7 @@ public class AuthRestCtrl {
             response.addCookie(CookieBuilder.twoFactorCookie(newEmailVerifyToken, remainingTime));
 
             return ResponseBuilder.buildSuccess(
-                    "RESENT",
+                    "CODE_RESENT",
                     messageService.get(Message.TWO_FACTOR_RESEND),
                     HttpStatus.OK
             );
@@ -332,7 +339,7 @@ public class AuthRestCtrl {
             response.addCookie(CookieBuilder.twoFactorCookie(newTwoFactorToken, remainingTime));
 
             return ResponseBuilder.buildSuccess(
-                    "RESENT",
+                    "CODE_RESENT",
                     messageService.get(Message.TWO_FACTOR_RESEND),
                     HttpStatus.OK
             );
@@ -343,6 +350,42 @@ public class AuthRestCtrl {
                     HttpStatus.GONE
             );
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response) {
+        alreadyLoggedInEvent(request);
+        final String email = body.get("email");
+        userService.loadUserByUsername(email);
+        String twoFactorToken = jwtService.extractTwoFactorTokenFromRequest(request);
+        if (
+                twoFactorToken != null
+                && twoFAService.hasActiveForgotPasswordSession(jwtService.extractSessionIdFromTwoFactorToken(twoFactorToken))
+        ) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
+        final String sessionId = twoFAService.sendForgotPasswordCode(email);
+        final String sessionJwt = jwtService.generateForgotPasswordToken(email, sessionId);
+        response.addCookie(CookieBuilder.twoFactorCookie(sessionJwt));
+        return ResponseBuilder.buildSuccess(
+                "CODE_SENT",
+                messageService.get(Message.TWO_FACTOR_FORGOT_PASSWORD_CODE_SEND),
+                HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/forgot-password/change")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ForgotPasswordRequest fpRequest, HttpServletRequest request, HttpServletResponse response) {
+        alreadyLoggedInEvent(request);
+        final String twoFactorToken = jwtService.extractTwoFactorTokenFromRequest(request);
+        ForgotPasswordSession session = twoFAService.validateAndGetForgotPasswordSession(twoFactorToken, fpRequest.getCode());
+        userService.changeForgottenPassword(fpRequest, session);
+        response.addCookie(CookieBuilder.emptyCookie("2FA"));
+        return ResponseBuilder.buildSuccess(
+                "DONE",
+                messageService.get(Message.USER_PASSWORD_CHANGE_SUCCESS),
+                HttpStatus.OK
+        );
     }
 
     private void alreadyLoggedInEvent(HttpServletRequest request) {

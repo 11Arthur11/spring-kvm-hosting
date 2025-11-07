@@ -1,10 +1,8 @@
-package me.parhamziaei.practice.dto.response;
+package me.parhamziaei.practice.dto.response.ticket;
 
 import lombok.*;
-import me.parhamziaei.practice.entity.jpa.Ticket;
 
 import java.util.List;
-import java.util.Set;
 
 @Data
 @Getter

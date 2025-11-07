@@ -1,19 +1,15 @@
-package me.parhamziaei.practice.controller;
+package me.parhamziaei.practice.controller.user;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.dto.response.ProfileResponse;
-import me.parhamziaei.practice.entity.jpa.RefreshToken;
+import me.parhamziaei.practice.dto.response.user.ProfileResponse;
 import me.parhamziaei.practice.entity.jpa.Role;
 import me.parhamziaei.practice.entity.jpa.User;
-import me.parhamziaei.practice.repository.jpa.RefreshTokenRepo;
 import me.parhamziaei.practice.service.JwtService;
-import me.parhamziaei.practice.service.TicketService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.ResponseBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +17,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-public class MainRestCtrl {
+public class TestController {
 
     private final UserService userService;
     private final JwtService jwtService;

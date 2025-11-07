@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.dto.request;
+package me.parhamziaei.practice.dto.request.ticket;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;

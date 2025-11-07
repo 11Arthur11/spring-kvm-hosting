@@ -40,25 +40,28 @@ logging:
     console: "%d{HH:mm:ss.SSS} | %highlight(%-5level) | %logger{0} | %msg%n"
 
 app:
+  ticket:
+    max-attachment-per-message: 5
   file:
-    image-properties:
+    media-properties:
       ticket-attachments-path: /home/arthur/spring-boot/uploads/ticket-attachments
-      allowed-mime-type:
+      allowed-media-mime-type:
         - image/png
         - image/jpeg
         - image/webp
-      maximum-image-size-mb: 10
+      maximum-media-size-mb: 10
 
 springdoc:
   api-docs:
     enabled: true
     path: /docs
 
-initialize:
-  admin:
-    email: javadtoktamp@gmail.com
-    password: 12345678
-    fullname: parham ziaei
+runtime:
+  init:
+    admin-email: javadtoktamp@gmail.com
+    admin-full-name: parham ziaei
+    admin-password: 12345678
 
 security:
   jwt_hs_256_key: f633915d212d5159e506d6d69f6d1adcad3aff7396b05545df48183e1331d537
+
