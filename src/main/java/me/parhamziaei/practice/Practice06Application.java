@@ -1,6 +1,5 @@
 package me.parhamziaei.practice;
 
-import me.parhamziaei.practice.configuration.properties.AuthorizationProperties;
 import me.parhamziaei.practice.configuration.properties.ImageStorageProperties;
 import me.parhamziaei.practice.configuration.properties.RuntimeInitProperties;
 import me.parhamziaei.practice.configuration.properties.TicketServiceProperties;
@@ -15,7 +14,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
         ImageStorageProperties.class,
         TicketServiceProperties.class,
         RuntimeInitProperties.class,
-        AuthorizationProperties.class
 })
 public class Practice06Application {
 

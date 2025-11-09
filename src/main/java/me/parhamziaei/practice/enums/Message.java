@@ -38,7 +38,8 @@ public enum Message {
     SERVICE_MEDIA_TYPE_NOT_ALLOWED("error.service.file.type-not-allowed"),
 
     SERVICE_TICKET_MAX_ATTACHMENT_REACHED("error.service.ticket.max_attachment_reached"),
-    SERVICE_TICKET_MESSAGE_SENT("success.service.ticket.message_sent");
+    SERVICE_TICKET_MESSAGE_SENT("success.service.ticket.message_sent"),
+    SERVICE_TICKET_SUBMITTED("success.service.ticket.submitted");
 
     private final String key;
 

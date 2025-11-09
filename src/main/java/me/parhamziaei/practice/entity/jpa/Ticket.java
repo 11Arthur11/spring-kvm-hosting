@@ -2,12 +2,9 @@ package me.parhamziaei.practice.entity.jpa;
 
 import jakarta.persistence.*;
 import lombok.*;
-import me.parhamziaei.practice.enums.Message;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -31,11 +28,14 @@ public class Ticket {
     @Column(name = "service_id")
     private String serviceName;
 
+    @Column(name = "owner_email", nullable = false)
+    private String ownerEmail;
+
+    @Column(name = "owner_full_name")
+    private String ownerFullName;
+
     @Column(name = "submitter_email", nullable = false)
     private String submitterEmail;
-
-    @Column(name = "submitter_full_name")
-    private String submitterFullName;
 
     @Column(name = "status", nullable = false)
     private String status;

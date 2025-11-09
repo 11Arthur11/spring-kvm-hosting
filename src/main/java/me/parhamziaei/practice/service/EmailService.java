@@ -3,7 +3,6 @@ package me.parhamziaei.practice.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.enums.Message;
 import me.parhamziaei.practice.enums.Text;
 import me.parhamziaei.practice.exception.custom.service.EmailServiceException;
 import org.springframework.mail.javamail.JavaMailSender;

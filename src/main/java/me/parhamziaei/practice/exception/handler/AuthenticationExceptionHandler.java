@@ -81,7 +81,7 @@ public class AuthenticationExceptionHandler {
     public ResponseEntity<Object> handleEmailAlreadyTakenException(EmailAlreadyTakenException e) {
         return ResponseBuilder.buildFailed(
                 "ERROR",
-                messageService.get(Message.AUTH_ALREADY_LOGGED_IN),
+                messageService.get(Message.REGISTER_EMAIL_ALREADY_TAKEN),
                 HttpStatus.BAD_REQUEST
         );
     }

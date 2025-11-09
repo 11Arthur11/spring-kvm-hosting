@@ -3,7 +3,6 @@ package me.parhamziaei.practice.util;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 public class SecurityUtil {
 
@@ -25,15 +24,15 @@ public class SecurityUtil {
     public final static Duration TWO_FACTOR_SESSION_TTL = Duration.ofSeconds(120);
     public final static Duration FORGOT_PASSWORD_SESSION_TTL = Duration.ofSeconds(180);
 
-    public static boolean requestMatcher(String requestUrl) {
+    public static boolean requestMatcher(String requestUri) {
         for(String filteredUrl : SKIP_URLs) {
             if (filteredUrl.endsWith("/**")) {
                 String baseFilteredPath = filteredUrl.substring(0, filteredUrl.length() - 3);
-                if (requestUrl.startsWith(baseFilteredPath)) {
+                if (requestUri.startsWith(baseFilteredPath)) {
                     return true;
                 }
             }
-            if (requestUrl.equalsIgnoreCase(filteredUrl)) {return true;}
+            if (requestUri.equalsIgnoreCase(filteredUrl)) {return true;}
         }
         return false;
     }

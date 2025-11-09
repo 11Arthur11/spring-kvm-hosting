@@ -25,7 +25,6 @@ public class BeanManagement {
                 .addMappings(m -> m.skip(TicketMessageResponse::setAttachments));
         mapper.typeMap(Ticket.class, TicketDetailResponse.class)
                 .addMappings(m -> m.skip(TicketDetailResponse::setMessages));
-
         return mapper;
     }
 }

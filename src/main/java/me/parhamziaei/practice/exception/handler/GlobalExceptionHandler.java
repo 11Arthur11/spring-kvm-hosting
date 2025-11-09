@@ -4,18 +4,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.enums.Message;
+import me.parhamziaei.practice.exception.custom.service.*;
 import me.parhamziaei.practice.service.MessageService;
 import me.parhamziaei.practice.util.ResponseBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @ControllerAdvice
 @RequiredArgsConstructor
@@ -60,6 +59,51 @@ public class GlobalExceptionHandler {
                 "ERROR",
                 messageService.get(Message.SERVER_VALIDATION_ERROR),
                 HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(TicketServiceException.class)
+    public ResponseEntity<Object> handleTicketServiceException() {
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.DEFAULT_FAILED),
+                HttpStatus.FORBIDDEN
+        );
+    }
+
+    @ExceptionHandler(TicketMaxAttachmentReachedException.class)
+    public ResponseEntity<Object> handleTicketMaxAttachmentReachedException() {
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.SERVICE_TICKET_MAX_ATTACHMENT_REACHED),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(FileStorageServiceException.class)
+    public ResponseEntity<?> handleFileStorageService() {
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.SERVICE_FILE_STORAGE_ERROR),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
+    @ExceptionHandler(MediaTypeNotAllowedException.class)
+    public ResponseEntity<?> handleUnsupportedMediaTypeException() {
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.SERVICE_MEDIA_TYPE_NOT_ALLOWED),
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE
+        );
+    }
+
+    @ExceptionHandler(MediaSizeTooLargeException.class)
+    public ResponseEntity<?> handleMediaSizeTooLargeException() {
+        return ResponseBuilder.buildFailed(
+                "ERROR",
+                messageService.get(Message.SERVICE_PAYLOAD_TOO_LARGE),
+                HttpStatus.PAYLOAD_TOO_LARGE
         );
     }
 

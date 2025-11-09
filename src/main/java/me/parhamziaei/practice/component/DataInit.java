@@ -2,7 +2,6 @@ package me.parhamziaei.practice.component;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import me.parhamziaei.practice.configuration.properties.AuthorizationProperties;
 import me.parhamziaei.practice.configuration.properties.RuntimeInitProperties;
 import me.parhamziaei.practice.dto.request.authenticate.RegisterRequest;
 import me.parhamziaei.practice.entity.jpa.Role;
@@ -25,7 +24,6 @@ public class DataInit implements CommandLineRunner {
     private final RoleRepo roleRepo;
     private final UserService userService;
     private final RuntimeInitProperties initProperties;
-    private final AuthorizationProperties authorizeProperties;
 
     @Override
     public void run(String... args) {

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.response.user.ProfileResponse;
 import me.parhamziaei.practice.entity.jpa.Role;
 import me.parhamziaei.practice.entity.jpa.User;
+import me.parhamziaei.practice.exception.custom.service.MediaSizeTooLargeException;
 import me.parhamziaei.practice.service.JwtService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.ResponseBuilder;
@@ -28,8 +29,8 @@ public class TestController {
     }
 
     @GetMapping("/greeting")
-    public ResponseEntity<?> greeting(HttpServletRequest request) {
-        return ResponseEntity.ok("Hello World");
+    public ResponseEntity<?> greeting() {
+        throw new MediaSizeTooLargeException();
     }
 
     @GetMapping("/goodbye")

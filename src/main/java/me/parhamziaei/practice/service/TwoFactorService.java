@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.entity.redis.EmailVerifySession;
 import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
 import me.parhamziaei.practice.entity.redis.TwoFactorSession;
-import me.parhamziaei.practice.exception.custom.authenticate.InvalidEmailVerifyCodeException;
 import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.repository.redis.EmailVerifyRepo;
 import me.parhamziaei.practice.repository.redis.ForgotPasswordRepo;
@@ -14,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.util.UUID;
 
 @Service

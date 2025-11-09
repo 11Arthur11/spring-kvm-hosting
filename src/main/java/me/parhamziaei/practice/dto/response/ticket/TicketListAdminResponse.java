@@ -4,19 +4,20 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketResponse {
+public class TicketListAdminResponse extends TicketBaseResponse {
 
-    private Long id;
+    private String ownerEmail;
+
+    private String ownerFullName;
 
     private String subject;
-
-    private String status;
 
     private LocalDateTime createdAt;
 

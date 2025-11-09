@@ -22,10 +22,6 @@ public class TicketRequest {
 
     private Long serviceId;
 
-    private String submitterEmail;
-
-    private String submitterFullName;
-
     private TicketMessageRequest message;
 
 }

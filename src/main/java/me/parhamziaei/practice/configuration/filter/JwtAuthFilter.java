@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.configuration;
+package me.parhamziaei.practice.configuration.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

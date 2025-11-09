@@ -1,7 +1,6 @@
 package me.parhamziaei.practice.repository.redis;
 
 import lombok.RequiredArgsConstructor;
-import me.parhamziaei.practice.entity.redis.EmailVerifySession;
 import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;

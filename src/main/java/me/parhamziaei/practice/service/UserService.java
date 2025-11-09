@@ -1,5 +1,6 @@
 package me.parhamziaei.practice.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.dto.request.authenticate.ChangePasswordRequest;
 import me.parhamziaei.practice.dto.request.authenticate.ForgotPasswordRequest;
@@ -11,7 +12,6 @@ import me.parhamziaei.practice.entity.jpa.Wallet;
 import me.parhamziaei.practice.entity.redis.ForgotPasswordSession;
 import me.parhamziaei.practice.enums.Roles;
 import me.parhamziaei.practice.exception.custom.authenticate.EmailAlreadyTakenException;
-import me.parhamziaei.practice.exception.custom.authenticate.InvalidTwoFactorException;
 import me.parhamziaei.practice.exception.custom.authenticate.PasswordPolicyException;
 import me.parhamziaei.practice.repository.jpa.RoleRepo;
 import me.parhamziaei.practice.repository.jpa.UserRepo;
@@ -31,6 +31,7 @@ public class UserService implements UserDetailsService {
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -43,6 +44,12 @@ public class UserService implements UserDetailsService {
 
     public boolean isEmailValid(String email) {
         return !userRepo.existsByEmail(email);
+    }
+
+    public User loadUserByRequest(HttpServletRequest request) throws UsernameNotFoundException {
+       final String accessToken = jwtService.extractJwtFromRequest(request);
+       final String email = jwtService.extractUsername(accessToken);
+       return userRepo.findByEmail(email);
     }
 
     public void initDefaultAdmin(RegisterRequest registerRequest) {
