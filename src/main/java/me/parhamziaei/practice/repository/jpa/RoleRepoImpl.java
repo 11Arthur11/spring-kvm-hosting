@@ -7,6 +7,7 @@ import me.parhamziaei.practice.entity.jpa.Role;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -23,12 +24,10 @@ public class RoleRepoImpl implements RoleRepo {
         return em.createQuery("select r from Role r", Role.class).getResultList();
     }
 
-    public Role findByName(String roleName) {
-        try {
-            return em.createQuery("SELECT r FROM Role r WHERE r.name = :roleName", Role.class).setParameter("roleName", roleName).getSingleResult();
-        } catch (Exception e) {
-            return null;
-        }
+    public Optional<Role> findByName(String roleName) {
+        return em.createQuery("SELECT r FROM Role r WHERE r.name = :roleName", Role.class).setParameter("roleName", roleName).getResultList()
+                .stream()
+                .findFirst();
     }
 
 }

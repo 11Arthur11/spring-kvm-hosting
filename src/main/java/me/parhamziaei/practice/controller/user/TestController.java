@@ -2,10 +2,10 @@ package me.parhamziaei.practice.controller.user;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import me.parhamziaei.practice.component.CurrentUser;
 import me.parhamziaei.practice.dto.response.user.ProfileResponse;
 import me.parhamziaei.practice.entity.jpa.Role;
 import me.parhamziaei.practice.entity.jpa.User;
-import me.parhamziaei.practice.exception.custom.service.MediaSizeTooLargeException;
 import me.parhamziaei.practice.service.JwtService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.ResponseBuilder;
@@ -22,6 +22,7 @@ public class TestController {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final CurrentUser currentUser;
 
     @GetMapping("/favicon.ico")
     private void noFavicon() {
@@ -30,7 +31,8 @@ public class TestController {
 
     @GetMapping("/greeting")
     public ResponseEntity<?> greeting() {
-        throw new MediaSizeTooLargeException();
+        User user = (User) userService.loadUserByUsername(currentUser.getEmail());
+        return ResponseEntity.ok(user.isStaff());
     }
 
     @GetMapping("/goodbye")

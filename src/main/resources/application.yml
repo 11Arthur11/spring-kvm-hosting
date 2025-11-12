@@ -35,7 +35,7 @@ spring:
 
 logging:
   threshold:
-    console: info
+    console: TRACE
   pattern:
     console: "%d{HH:mm:ss.SSS} | %highlight(%-5level) | %logger{0} | %msg%n"
 
@@ -49,6 +49,10 @@ app:
         - image/png
         - image/jpeg
         - image/webp
+      allowed-media-extension:
+        - jpg
+        - png
+        - webp
       maximum-media-size-mb: 10
 
 springdoc:

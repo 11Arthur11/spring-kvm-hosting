@@ -6,10 +6,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.parhamziaei.practice.component.CurrentUser;
+import me.parhamziaei.practice.entity.jpa.User;
 import me.parhamziaei.practice.service.JwtService;
 import me.parhamziaei.practice.service.UserService;
 import me.parhamziaei.practice.util.CookieBuilder;
 import me.parhamziaei.practice.util.SecurityUtil;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +33,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserService userService;
+    private final ObjectFactory<CurrentUser> currentUserObjectFactory;
 
     @Override
     protected void doFilterInternal(
@@ -59,12 +64,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 userEmail = jwtService.extractUsername(refreshToken);
             }
             if (userEmail != null) {
-                UserDetails user = userService.loadUserByUsername(userEmail);
+                User user = (User) userService.loadUserByUsername(userEmail);
                 if (jwtService.isTokenValid(jwt)) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     user, null, user.getAuthorities()
                             );
+                    buildCurrentUserContext(user);
+
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                     log.info("JwtFilter Success for user: {} requestURI: {}", userEmail, requestURI);
@@ -76,6 +83,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             new UsernamePasswordAuthenticationToken(
                                     user, null, user.getAuthorities()
                             );
+                    buildCurrentUserContext(user);
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -92,6 +100,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void buildCurrentUserContext(User user) {
+        CurrentUser currentUser = currentUserObjectFactory.getObject();
+        currentUser.setId(user.getId());
+        currentUser.setEmail(user.getEmail());
+        currentUser.setFullName(user.getFullName());
     }
 
 }

@@ -1,5 +1,6 @@
 package me.parhamziaei.practice.component;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.parhamziaei.practice.configuration.properties.RuntimeInitProperties;
@@ -33,11 +34,11 @@ public class DataInit implements CommandLineRunner {
 
     public void initRoles() {
         List<String> dbRoles = roleRepo.findAll().stream().map(Role::getName).toList();
-        List<String> internalRoles = Arrays.stream(Roles.values()).map(Roles::getName).toList();
+        List<Roles> internalRoles = Arrays.stream(Roles.values()).toList();
         internalRoles.forEach(role -> {
-            if (!dbRoles.contains(role)) {
-                roleRepo.save(new Role(role));
-                log.info("Role ({}) created by system", role);
+            if (!dbRoles.contains(role.value())) {
+                roleRepo.save(new Role(role.value(), role.hierarchy()));
+                log.info("Role ({}) created by system", role.value());
             }
         });
     }

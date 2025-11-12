@@ -20,11 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -32,16 +28,13 @@ public class FileStorageService {
 
     private final ImageStorageProperties imageProperties;
     private final Path imagePath;
-    private final Set<String> allowedMediaExtensions;
-    private final Set<String> allowedMediaMimeType;
+    private final List<String> allowedMediaExtensions;
+    private final List<String> allowedMediaMimeType;
 
     public FileStorageService(ImageStorageProperties imageProperties) {
         this.imageProperties = imageProperties;
         this.imagePath = Paths.get(imageProperties.ticketAttachmentsPath());
-        this.allowedMediaExtensions = imageProperties.allowedMediaMimeType().stream()
-                .filter(m -> m.contains("/"))
-                .map(m -> m.substring(m.indexOf("/") + 1))
-                .collect(Collectors.toSet());
+        this.allowedMediaExtensions = imageProperties.allowedMediaExtension();
         this.allowedMediaMimeType = imageProperties.allowedMediaMimeType();
         try {
             Files.createDirectories(imagePath);
@@ -68,10 +61,9 @@ public class FileStorageService {
         return file.getSize() < allowedSizeByte;
     }
 
-    private boolean isImageTypeAllowed(MultipartFile file) {
+    private boolean isMediaTypeAllowed(MultipartFile file) {
         String mimeType = file.getContentType();
         String extension = getFileExtension(file.getOriginalFilename());
-
         return allowedMediaExtensions.contains(extension) && allowedMediaMimeType.contains(mimeType);
     }
 
@@ -79,8 +71,8 @@ public class FileStorageService {
         if (!isImageSizeAllowed(file)) {
             throw new MediaSizeTooLargeException();
         }
-        if (!isImageTypeAllowed(file)) {
-            throw new MediaTypeNotAllowedException();
+        if (!isMediaTypeAllowed(file)) {
+            throw new MediaTypeNotAllowedException("Media Type: " + file.getContentType());
         }
 
         LocalDate today = LocalDate.now();

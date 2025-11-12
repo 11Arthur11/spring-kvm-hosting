@@ -2,12 +2,14 @@ package me.parhamziaei.practice.entity.jpa;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import me.parhamziaei.practice.enums.Roles;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -93,6 +95,27 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream().map(role -> (GrantedAuthority) role::getName).toList();
+    }
+
+    public boolean isStaff() {
+        Set<String> userRoles = roles.stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+
+        List<String> staffRoles = Roles.staffRoles().stream()
+                .map(Roles::value)
+                .toList();
+
+        for (String userRole : userRoles) {
+            if (staffRoles.contains(userRole)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Role getHigherAuthority() {
+        return roles.stream().max(Comparator.comparing(Role::getHierarchy)).get();
     }
 
     @Override

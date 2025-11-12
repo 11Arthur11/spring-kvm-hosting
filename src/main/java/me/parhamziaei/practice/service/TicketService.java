@@ -5,13 +5,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.parhamziaei.practice.configuration.properties.TicketServiceProperties;
 import me.parhamziaei.practice.dto.internal.ImageInternal;
-import me.parhamziaei.practice.dto.query.TicketFilterRequest;
+import me.parhamziaei.practice.dto.request.query.TicketFilterRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketAdminRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketBaseRequest;
 import me.parhamziaei.practice.dto.request.ticket.TicketMessageRequest;
-import me.parhamziaei.practice.dto.request.ticket.TicketRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketUserRequest;
 import me.parhamziaei.practice.dto.response.ticket.*;
 import me.parhamziaei.practice.entity.jpa.*;
 import me.parhamziaei.practice.enums.TicketDepartment;
 import me.parhamziaei.practice.enums.TicketStatus;
+import me.parhamziaei.practice.exception.custom.service.NoSuchDataException;
 import me.parhamziaei.practice.exception.custom.service.TicketMaxAttachmentReachedException;
 import me.parhamziaei.practice.exception.custom.service.TicketServiceException;
 import me.parhamziaei.practice.repository.jpa.TicketRepo;
@@ -24,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,21 +43,72 @@ public class TicketService {
     private final MessageService messageService;
     private final TicketServiceProperties properties;
 
-    private boolean isTicketOwner(Optional<Ticket> ticket, String userEmail) {
-        return ticket.map(t -> userEmail.equals(t.getSubmitterEmail())).orElse(false);
-    }
+    protected BiPredicate<User, Ticket> hasAccessToTicket = (user, ticket) -> {
+        if (user.isStaff())
+            return true;
+        else
+            return ticket.getOwnerEmail().equals(user.getEmail());
+    };
 
-    private boolean isAttachmentOwner(TicketMessageAttachment attachment, String userEmail) {
-        return attachment.getOwnerEmail().equals(userEmail);
-    }
+    protected BiPredicate<User, TicketMessageAttachment> hasAccessToAttachment = (user, attachment) -> {
+        if (user.isStaff())
+            return true;
+        else
+            return attachment.getOwnerEmail().equals(user.getEmail());
+    };
 
-    private <T extends TicketBaseResponse> T enrichTicket(Ticket ticket, T dto) {
+    private <T extends AbstractTicketResponse> T enrichTicket(Ticket ticket, T dto) {
         dto.setDepartment(messageService.get(TicketDepartment.fromValue(ticket.getDepartment())));
         dto.setStatus(messageService.get(TicketStatus.fromValue(ticket.getStatus())));
         return dto;
     }
 
-    public PagedModel<TicketListAdminResponse> getTickets(TicketFilterRequest filterRequest) {
+    private <T extends AbstractTicketResponse> Page<T> mapPage(Page<Ticket> source, Class<T> responseType) {
+        List<T> list = new ArrayList<>();
+        source.getContent().forEach(t -> {
+            T dto = enrichTicket(t, modelMapper.map(t, responseType));
+            list.add(dto);
+        });
+        return new PageImpl<>(list, source.getPageable(), source.getTotalElements());
+    }
+
+    private <T extends AbstractTicketResponse> T mapTicket(Ticket ticket, Class<T> responseType) {
+        return enrichTicket(ticket, modelMapper.map(ticket, responseType));
+    }
+
+    private <T extends TicketDetailBaseResponse> T mapTicketDetail(Ticket ticket, Class<T> responseType) {
+        List<TicketMessageResponse> messagesDTO = mapMessages(ticket.getMessages());
+        T dto = enrichTicket(ticket, modelMapper.map(ticket, responseType));
+        dto.setMessages(messagesDTO);
+        return dto;
+    }
+
+    private List<TicketMessageResponse> mapMessages(Set<TicketMessage> ticketMessage) {
+        List<TicketMessageResponse> messagesDTO = new ArrayList<>();
+
+        ticketMessage.forEach(tm -> {
+            Set<TicketAttachmentResponse> attachmentsDTO = tm.getAttachments()
+                    .stream()
+                    .map(att ->
+                            TicketAttachmentResponse.builder()
+                                    .attachmentName(att.getOriginalName())
+                                    .size(att.getSize())
+                                    .identifier(att.getStoredName())
+                                    .build()
+                    )
+                    .collect(Collectors.toSet());
+
+            TicketMessageResponse messageDTO = modelMapper.map(tm, TicketMessageResponse.class);
+            messageDTO.setAttachments(attachmentsDTO);
+            messagesDTO.add(messageDTO);
+        });
+
+        return messagesDTO.stream()
+                .sorted(Comparator.comparing(TicketMessageResponse::getSentAt))
+                .toList();
+    }
+
+    public PagedModel<TicketListAdminResponse> getAllTickets(TicketFilterRequest filterRequest) {
         Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), Sort.by(filterRequest.getSortedBy()).ascending());
         Page<Ticket> ticketPage;
 
@@ -73,36 +129,63 @@ public class TicketService {
             ticketPage = ticketRepo.findAllByStatusAndDepartment(status, department, pageable);
         }
 
-        List<TicketListAdminResponse> ticketsDTO = new ArrayList<>();
-        ticketPage.getContent()
-                .forEach(t -> {
-                    TicketListAdminResponse ticketDTO = enrichTicket(t, modelMapper.map(t, TicketListAdminResponse.class));
-                    ticketsDTO.add(ticketDTO);
-                });
-
-        Page<TicketListAdminResponse> ticketsDTOPage = new PageImpl<>(ticketsDTO, pageable, ticketPage.getTotalElements());
-        return new PagedModel<>(ticketsDTOPage);
+        Page<TicketListAdminResponse> dtoPage = mapPage(ticketPage, TicketListAdminResponse.class);
+        return new PagedModel<>(dtoPage);
     }
 
     @Transactional
-    public void addNewMessage(TicketMessageRequest ticketMessageRequest, String senderEmail, Long ticketId, List<MultipartFile> files) {
-        if (files == null) {
-            files = new ArrayList<>();
+    public void addNewMessage(TicketMessageRequest ticketMessageRequest, String senderUserEmail, Long ticketId, List<MultipartFile> files) {
+        User user = (User) userService.loadUserByUsername(senderUserEmail);
+        addNewMessage(ticketMessageRequest, user, ticketId, files);
+    }
+
+    protected BiFunction<TicketStatus, User, TicketStatus> calculateNewStatus = (currentStatus, modifierUser) -> {
+        switch (currentStatus) {
+            case CLOSED -> {
+                if (!modifierUser.isStaff())
+                    throw new TicketServiceException("Cannot add new message on closed ticket");
+                else
+                    return TicketStatus.WAITING;
+            }
+            case PENDING -> {
+                if (modifierUser.isStaff())
+                    return TicketStatus.WAITING;
+            }
+            case RESPONDED, WAITING -> {
+                if (!modifierUser.isStaff())
+                    return TicketStatus.PENDING;
+            }
         }
-        if (files.size() > properties.maxAttachmentPerMessage())  {
+        return currentStatus;
+    };
+
+    public void changeTicketStatus(Long ticketId, TicketStatus newStatus) {
+        Optional<Ticket> dbTicket = ticketRepo.findById(ticketId);
+        if (dbTicket.isPresent()) {
+            Ticket ticket = dbTicket.get();
+            ticket.setStatus(newStatus.value());
+            ticketRepo.update(ticket);
+        }
+    }
+
+    @Transactional
+    protected void addNewMessage(TicketMessageRequest ticketMessageRequest, User senderUser, Long ticketId, List<MultipartFile> files) {
+        if (files != null && files.size() > properties.maxAttachmentPerMessage())  {
             throw new TicketMaxAttachmentReachedException("Maximum number of ticket attachments reached. limit is: " + properties.maxAttachmentPerMessage());
         }
         Optional<Ticket> loadedTicket = ticketRepo.findById(ticketId);
-        if (loadedTicket.isPresent() && isTicketOwner(loadedTicket, senderEmail)) {
+        if (loadedTicket.isPresent() && hasAccessToTicket.test(senderUser, loadedTicket.get())) {
             Ticket ticket = loadedTicket.get();
-            User senderUser = (User) userService.loadUserByUsername(senderEmail);
 
-            String senderRole = senderUser
-                    .getRoles()
-                    .stream()
-                    .findFirst()
-                    .map(Role::getName)
-                    .orElse(null);
+            String senderRole = senderUser.getHigherAuthority().getName();
+            TicketStatus newStatus = calculateNewStatus.apply(
+                    TicketStatus.fromValue(ticket.getStatus()),
+                    senderUser
+            );
+
+            if (!newStatus.equals(TicketStatus.fromValue(ticket.getStatus()))) {
+                changeTicketStatus(ticket.getId(), newStatus);
+            }
 
             TicketMessage newTicketMessage = TicketMessage.builder()
                     .message(ticketMessageRequest.getContent())
@@ -110,138 +193,87 @@ public class TicketService {
                     .senderRole(senderRole)
                     .build();
 
-            if (files.isEmpty()) {
-                ticketRepo.addMessage(ticket.getId(), newTicketMessage);
-                return;
-            }
-
-            Optional<TicketMessage> dbTicketMessage = ticketRepo.addMessage(ticket.getId(), newTicketMessage);
-
-            List<MultipartFile> finalFiles = files;
-            dbTicketMessage.ifPresent(loadedTicketMessage -> finalFiles.forEach(file -> {
-                String storedPath = fileStorageService.storeTicketAttachment(file);
-
-                TicketMessageAttachment attachment = TicketMessageAttachment.builder()
-                        .originalName(file.getOriginalFilename())
-                        .storedPath(storedPath)
-                        .storedName(Paths.get(storedPath).getFileName().toString())
-                        .size(file.getSize())
-                        .mimeType(file.getContentType())
-                        .ownerEmail(senderEmail)
-                        .ticketMessage(loadedTicketMessage)
-                        .build();
-
-                loadedTicketMessage.addAttachment(attachment);
-            }));
+            addAttachmentsToTicketMessage(
+                    ticketRepo.addMessage(ticketId, newTicketMessage),
+                    files
+            );
 
         } else {
-            throw new TicketServiceException("Ticket not found or permission missing.");
+            throw new TicketServiceException("Ticket not found with id " + ticketId);
         }
     }
 
     @Transactional
-    public TicketDetailResponse getTicketDetails(Long id, String requesterEmail) {
-        Optional<Ticket> loadedTicket = ticketRepo.findById(id);
-        if (loadedTicket.isPresent() && isTicketOwner(loadedTicket, requesterEmail)) {
+    protected void addAttachmentsToTicketMessage(Optional<TicketMessage> ticketMessage, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        ticketMessage.ifPresent(loadedTicketMessage -> files.forEach(file -> {
+            String storedPath = fileStorageService.storeTicketAttachment(file);
+
+            TicketMessageAttachment attachment = TicketMessageAttachment.builder()
+                    .originalName(file.getOriginalFilename())
+                    .storedPath(storedPath)
+                    .storedName(Paths.get(storedPath).getFileName().toString())
+                    .size(file.getSize())
+                    .mimeType(file.getContentType())
+                    .ownerEmail(loadedTicketMessage.getTicket().getOwnerEmail())
+                    .ticketMessage(loadedTicketMessage)
+                    .build();
+
+            loadedTicketMessage.addAttachment(attachment);
+        }));
+    }
+
+    public <T extends TicketDetailBaseResponse> T getTicketDetails(Long ticketId, String requesterEmail, Class<T> responseType) {
+        User requesterUser = (User) userService.loadUserByUsername(requesterEmail);
+        Optional<Ticket> loadedTicket = ticketRepo.findById(ticketId);
+        if (loadedTicket.isPresent() && hasAccessToTicket.test(requesterUser, loadedTicket.get())) {
             Ticket ticket = loadedTicket.get();
-            List<TicketMessageResponse> messagesDTO = new ArrayList<>();
-
-            ticket.getMessages().forEach(ticketMessage -> {
-                Set<TicketAttachmentResponse> attachmentsDTO = ticketMessage.getAttachments()
-                        .stream()
-                        .map(att ->
-                                TicketAttachmentResponse.builder()
-                                        .attachmentName(att.getOriginalName())
-                                        .size(att.getSize())
-                                        .identifier(att.getStoredName())
-                                        .build()
-                        )
-                        .collect(Collectors.toSet());
-
-                TicketMessageResponse messageDTO = modelMapper.map(ticketMessage, TicketMessageResponse.class);
-                messageDTO.setAttachments(attachmentsDTO);
-                messagesDTO.add(messageDTO);
-            });
-
-            List<TicketMessageResponse> sortedMessagesDTO = messagesDTO.stream()
-                    .sorted(Comparator.comparing(TicketMessageResponse::getSentAt))
-                    .toList();
-
-            TicketDetailResponse ticketDTO = enrichTicket(ticket, modelMapper.map(ticket, TicketDetailResponse.class));
-            ticketDTO.setMessages(sortedMessagesDTO);
-            return ticketDTO;
+            return mapTicketDetail(ticket, responseType);
         } else {
-            throw new TicketServiceException("Ticket not found or permission missing.");
+            throw new NoSuchDataException("Ticket not found with id " + ticketId);
         }
     }
 
     @Transactional
-    public void submitTicket(String submitterEmail, TicketRequest request, List<MultipartFile> files) {
+    public <T extends TicketBaseRequest> void submit(String submitterEmail, T ticketRequest, List<MultipartFile> files) {
         String relatedServiceName = null;
         User submitterUser = (User) userService.loadUserByUsername(submitterEmail);
-        if (request.getServiceId() != null) {
+        if (ticketRequest.getServiceName() != null) {
             //todo make a check if entered service belong to ownerEmail or not, if not throw TicketServiceException()
         }
-        String ticketDepartment = TicketDepartment.validateValue(request.getDepartment());
+        String ticketDepartment = TicketDepartment.validateValue(ticketRequest.getDepartment());
 
         Ticket ticket = Ticket.builder()
-                .subject(request.getSubject())
+                .subject(ticketRequest.getSubject())
                 .department(ticketDepartment)
                 .serviceName(relatedServiceName)
-                .status(TicketStatus.PENDING.value())
-                .ownerEmail(submitterEmail)
                 .submitterEmail(submitterUser.getEmail())
                 .ownerFullName(submitterUser.getFullName())
                 .build();
 
-        ticketRepo.save(ticket);
-        addNewMessage(
-                request.getMessage(),
-                submitterUser.getEmail(),
-                ticket.getId(),
-                files
-        );
-    }
-
-    @Transactional
-    public void submitTicketByAdmin(String submitterEmail, String ownerEmail, TicketRequest request, List<MultipartFile> files) {
-        String relatedServiceName = null;
-        User submitterUser = (User) userService.loadUserByUsername(submitterEmail);
-        User ownerUser = (User) userService.loadUserByUsername(ownerEmail);
-        if (request.getServiceId() != null) {
-            //todo make a check if entered service belong to ownerEmail or not, if not throw TicketServiceException()
+        if (submitterUser.isStaff()) {
+            ticket.setStatus(TicketStatus.WAITING.value());
+            ticket.setOwnerEmail(ticketRequest.getOwnerEmail());
+        } else {
+            ticket.setStatus(TicketStatus.PENDING.value());
+            ticket.setOwnerEmail(submitterEmail);
         }
-        String ticketDepartment = TicketDepartment.validateValue(request.getDepartment());
-
-        Ticket ticket = Ticket.builder()
-                .subject(request.getSubject())
-                .department(ticketDepartment)
-                .serviceName(relatedServiceName)
-                .status(TicketStatus.WAITING.value())
-                .ownerEmail(ownerUser.getEmail())
-                .ownerFullName(ownerUser.getFullName())
-                .submitterEmail(submitterUser.getEmail())
-                .build();
 
         ticketRepo.save(ticket);
         addNewMessage(
-                request.getMessage(),
-                submitterUser.getEmail(),
+                ticketRequest.getMessage(),
+                submitterUser,
                 ticket.getId(),
                 files
         );
+
     }
 
-    public PagedModel<TicketListUserResponse> getUserTickets(Pageable pageable,String userEmail) {
+    public <T extends AbstractTicketResponse> PagedModel<T> getUserTickets(Pageable pageable, String userEmail, Class<T> responseType) {
         Page<Ticket> tickets = ticketRepo.findByOwnerEmail(pageable, userEmail);
-
-        List<TicketListUserResponse> ticketsDTO = new ArrayList<>();
-        tickets.getContent().forEach(ticket -> {
-            TicketListUserResponse ticketDTO = enrichTicket(ticket, modelMapper.map(ticket, TicketListUserResponse.class));
-            ticketsDTO.add(ticketDTO);
-        });
-
-        Page<TicketListUserResponse> sortedPageDTO = new PageImpl<>(ticketsDTO, pageable, tickets.getTotalElements());
+        Page<T> sortedPageDTO = mapPage(tickets, responseType);
         return new PagedModel<>(sortedPageDTO);
     }
 
@@ -251,7 +283,7 @@ public class TicketService {
         if (dbAttachment.isPresent()) {
             TicketMessageAttachment attachment = dbAttachment.get();
             Optional<Resource> imageResource = fileStorageService.loadTicketAttachment(attachment);
-            if (isAttachmentOwner(attachment, user.getEmail()) && imageResource.isPresent()) {
+            if (hasAccessToAttachment.test(user, attachment) && imageResource.isPresent()) {
                 return ImageInternal.builder()
                         .image(imageResource.get())
                         .originalName(attachment.getOriginalName())

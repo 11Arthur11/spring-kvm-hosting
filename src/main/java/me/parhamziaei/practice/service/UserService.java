@@ -1,7 +1,7 @@
 package me.parhamziaei.practice.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.parhamziaei.practice.dto.request.authenticate.ChangePasswordRequest;
 import me.parhamziaei.practice.dto.request.authenticate.ForgotPasswordRequest;
 import me.parhamziaei.practice.dto.request.authenticate.RegisterRequest;
@@ -21,9 +21,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.management.relation.RoleNotFoundException;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
@@ -37,8 +39,9 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserDetails user = userRepo.findByEmail(username);
         if (user == null) {
-            throw new UsernameNotFoundException("USER_NOT_FOUND");
+            throw new UsernameNotFoundException("User not found with username: " + username);
         }
+        log.info("Loading user: {}", username);
         return user;
     }
 
@@ -46,22 +49,16 @@ public class UserService implements UserDetailsService {
         return !userRepo.existsByEmail(email);
     }
 
-    public User loadUserByRequest(HttpServletRequest request) throws UsernameNotFoundException {
-       final String accessToken = jwtService.extractJwtFromRequest(request);
-       final String email = jwtService.extractUsername(accessToken);
-       return userRepo.findByEmail(email);
-    }
-
     public void initDefaultAdmin(RegisterRequest registerRequest) {
-        Role userRole = roleRepo.findByName(Roles.USER.getName());
-        Role adminRole = roleRepo.findByName(Roles.ADMIN.getName());
+        Role adminRole = roleRepo.findByName(Roles.ADMIN.value())
+                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
         Wallet wallet = new Wallet();
         UserSetting userSetting = new UserSetting();
         User user = User.builder()
                 .fullName(registerRequest.getFullName().trim().toLowerCase())
                 .email(registerRequest.getEmail().trim().toLowerCase())
                 .password(passwordEncoder.encode(registerRequest.getRawPassword()))
-                .roles(Set.of(userRole, adminRole))
+                .roles(Set.of(adminRole))
                 .enabled(true)
                 .locked(false)
                 .expired(false)
@@ -102,7 +99,8 @@ public class UserService implements UserDetailsService {
             throw new PasswordPolicyException();
         }
 
-        Role role = roleRepo.findByName(Roles.USER.getName());
+        Role role = roleRepo.findByName(Roles.USER.value())
+                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
         Wallet wallet = new Wallet();
         UserSetting userSetting = new UserSetting();
         User user = User.builder()

@@ -1,4 +1,4 @@
-package me.parhamziaei.practice.dto.query;
+package me.parhamziaei.practice.dto.request.query;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

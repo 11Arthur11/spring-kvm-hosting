@@ -107,4 +107,13 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(NoSuchDataException.class)
+    public ResponseEntity<?> handleNoSuchDataException() {
+        return ResponseBuilder.buildFailed(
+                "NO_DATA",
+                "",
+                HttpStatus.OK
+        );
+    }
+
 }

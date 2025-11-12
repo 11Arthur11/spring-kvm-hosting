@@ -1,6 +1,6 @@
 package me.parhamziaei.practice.configuration;
 
-import me.parhamziaei.practice.dto.response.ticket.TicketDetailResponse;
+import me.parhamziaei.practice.dto.response.ticket.TicketDetailBaseResponse;
 import me.parhamziaei.practice.dto.response.ticket.TicketMessageResponse;
 import me.parhamziaei.practice.entity.jpa.Ticket;
 import me.parhamziaei.practice.entity.jpa.TicketMessage;
@@ -23,8 +23,8 @@ public class BeanManagement {
         ModelMapper mapper = new ModelMapper();
         mapper.typeMap(TicketMessage.class, TicketMessageResponse.class)
                 .addMappings(m -> m.skip(TicketMessageResponse::setAttachments));
-        mapper.typeMap(Ticket.class, TicketDetailResponse.class)
-                .addMappings(m -> m.skip(TicketDetailResponse::setMessages));
+        mapper.typeMap(Ticket.class, TicketDetailBaseResponse.class)
+                .addMappings(m -> m.skip(TicketDetailBaseResponse::setMessages));
         return mapper;
     }
 }

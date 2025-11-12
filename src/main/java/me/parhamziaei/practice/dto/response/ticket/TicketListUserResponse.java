@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketListUserResponse extends TicketBaseResponse {
+public class TicketListUserResponse extends AbstractTicketResponse {
 
     private String subject;
 

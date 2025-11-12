@@ -3,24 +3,24 @@ package me.parhamziaei.practice.dto.response.ticket;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class TicketListAdminResponse extends AbstractTicketResponse {
-
-    private String ownerEmail;
-
-    private String ownerFullName;
-
+@NoArgsConstructor
+public class TicketDetailBaseResponse extends  AbstractTicketResponse {
+    
     private String subject;
+
+    private String serviceName;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime lastModified;
 
+    private List<TicketMessageResponse> messages;
+    
 }

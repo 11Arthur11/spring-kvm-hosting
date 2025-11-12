@@ -25,7 +25,7 @@ public class Ticket {
     @Column(name = "department", nullable = false)
     private String department;
 
-    @Column(name = "service_id")
+    @Column(name = "service_name")
     private String serviceName;
 
     @Column(name = "owner_email", nullable = false)

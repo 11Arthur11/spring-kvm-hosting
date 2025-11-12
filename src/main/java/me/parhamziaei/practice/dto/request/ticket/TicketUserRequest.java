@@ -1,17 +1,11 @@
 package me.parhamziaei.practice.dto.request.ticket;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.validator.constraints.Length;
 
 @Data
-@Getter
-@Setter
-@Builder
-public class TicketRequest {
+public class TicketUserRequest implements TicketBaseRequest{
 
     @NotBlank
     @Length(min = 5)
@@ -20,8 +14,13 @@ public class TicketRequest {
     @NotBlank
     private String department;
 
-    private Long serviceId;
+    private String serviceName;
 
     private TicketMessageRequest message;
 
+    @Override
+    public String getOwnerEmail() {
+        return null;
+    }
 }
+

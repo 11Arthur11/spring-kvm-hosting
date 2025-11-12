@@ -3,6 +3,7 @@ package me.parhamziaei.practice.repository.jpa;
 import me.parhamziaei.practice.entity.jpa.Role;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RoleRepo {
 
@@ -10,6 +11,6 @@ public interface RoleRepo {
 
     List<Role> findAll();
 
-    Role findByName(String roleName);
+    Optional<Role> findByName(String roleName);
 
 }
