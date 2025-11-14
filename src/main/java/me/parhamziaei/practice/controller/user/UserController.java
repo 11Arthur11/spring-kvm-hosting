@@ -32,21 +32,11 @@ public class UserController {
 
         final String accessToken = jwtService.extractJwtFromRequest(request);
         final String email = jwtService.extractUsername(accessToken);
-
-        final boolean passwordChanged = userService.changePasswordAndGetResult(cpRequest, email);
-
-        if (passwordChanged) {
-            return ResponseBuilder.buildSuccess(
-                    "DONE",
-                    messageService.get(Message.USER_PASSWORD_CHANGE_SUCCESS),
-                    HttpStatus.OK
-            );
-        }
-
-        return ResponseBuilder.buildFailed(
-                "FAILED",
-                messageService.get(Message.USER_PASSWORD_CHANGE_FAILED),
-                HttpStatus.BAD_REQUEST
+        userService.changePassword(cpRequest, email);
+        return ResponseBuilder.buildSuccess(
+                "DONE",
+                messageService.get(Message.USER_PASSWORD_CHANGE_SUCCESS),
+                HttpStatus.OK
         );
     }
 

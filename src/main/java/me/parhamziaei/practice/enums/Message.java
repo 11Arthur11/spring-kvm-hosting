@@ -39,7 +39,8 @@ public enum Message {
 
     SERVICE_TICKET_MAX_ATTACHMENT_REACHED("error.service.ticket.max_attachment_reached"),
     SERVICE_TICKET_MESSAGE_SENT("success.service.ticket.message_sent"),
-    SERVICE_TICKET_SUBMITTED("success.service.ticket.submitted");
+    SERVICE_TICKET_SUBMITTED("success.service.ticket.submitted"),
+    SERVICE_TICKET_EDITED("success.service.ticket.edited");
 
     private final String key;
 

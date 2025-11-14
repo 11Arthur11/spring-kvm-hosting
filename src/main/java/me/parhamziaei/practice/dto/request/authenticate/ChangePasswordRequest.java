@@ -3,6 +3,7 @@ package me.parhamziaei.practice.dto.request.authenticate;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.Getter;
+import me.parhamziaei.practice.validation.annotation.PasswordValidation;
 import org.hibernate.validator.constraints.Length;
 
 @Data
@@ -12,8 +13,7 @@ public class ChangePasswordRequest {
     @NotBlank
     private String oldPassword;
 
-    @NotBlank(message = "PASSWORD_EMPTY")
-    @Length(min = 8, message = "PASSWORD_TOO_SHORT")
+    @PasswordValidation
     private String newPassword;
 
     @NotBlank(message = "PASSWORD_CONFIRM_EMPTY")

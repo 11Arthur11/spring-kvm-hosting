@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import me.parhamziaei.practice.validation.annotation.PasswordValidation;
 import org.hibernate.validator.constraints.Length;
 
 @Data
@@ -22,8 +23,7 @@ public class RegisterRequest {
     @Length(min = 5, max = 40, message = "FULLNAME_TOO_SHORT")
     private String fullName;
 
-    @NotBlank(message = "PASSWORD_EMPTY")
-    @Length(min = 8, message = "PASSWORD_TOO_SHORT")
+    @PasswordValidation
     private String rawPassword;
 
     @NotBlank(message = "PASSWORD_CONFIRM_EMPTY")

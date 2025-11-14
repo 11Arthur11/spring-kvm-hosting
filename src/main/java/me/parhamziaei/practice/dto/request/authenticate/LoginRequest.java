@@ -16,8 +16,6 @@ public class LoginRequest {
     @Email(message = "EMAIL_INVALID")
     private String email;
 
-    @NotBlank(message = "PASSWORD_EMPTY")
-    @Length(min = 8, message = "PASSWORD_TOO_SHORT")
     private String password;
 
     private boolean rememberMe;

@@ -1,10 +1,12 @@
 package me.parhamziaei.practice.controller.admin;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.parhamziaei.practice.component.CurrentUser;
 import me.parhamziaei.practice.dto.request.query.TicketFilterRequest;
 import me.parhamziaei.practice.dto.request.ticket.TicketAdminRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketEditAdminRequest;
 import me.parhamziaei.practice.dto.response.ticket.TicketDetailAdminResponse;
 import me.parhamziaei.practice.dto.response.ticket.TicketListAdminResponse;
 import me.parhamziaei.practice.dto.response.ticket.TicketListUserResponse;
@@ -36,7 +38,7 @@ public class TicketAdminController {
 
     @GetMapping
     public ResponseEntity<?> getAllTickets(
-            @ModelAttribute TicketFilterRequest filterRequest
+            @ModelAttribute @Valid TicketFilterRequest filterRequest
     ) {
         PagedModel<TicketListAdminResponse> tickets = ticketService.getAllTickets(filterRequest);
         if (tickets.getContent().isEmpty()) {
@@ -72,11 +74,24 @@ public class TicketAdminController {
         );
     }
 
-    @GetMapping("/detail/{id}")
-    public ResponseEntity<?> getTicketDetails(@PathVariable Long id){
+    @PutMapping("/edit/{ticketId}")
+    public ResponseEntity<?> editTicket(
+            @Valid @RequestBody TicketEditAdminRequest editRequest,
+            @PathVariable Long ticketId
+    ) {
+        ticketService.editTicket(editRequest, ticketId);
+        return ResponseBuilder.buildSuccess(
+                "SUCCESS",
+                messageService.get(Message.SERVICE_TICKET_EDITED),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/detail/{ticketId}")
+    public ResponseEntity<?> getTicketDetails(@PathVariable Long ticketId){
         String userEmail = currentUser.getEmail();
         TicketDetailAdminResponse ticket = ticketService.getTicketDetails(
-                id,
+                ticketId,
                 userEmail,
                 TicketDetailAdminResponse.class
         );

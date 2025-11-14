@@ -106,8 +106,8 @@ public class TicketController {
     }
 
     @Operation(summary = "Adding new message to existing ticket")
-    @PostMapping(
-            value = "/detail/{ticketId}/message/add",
+    @PutMapping(
+            value = "/detail/{ticketId}/message",
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
     )
     public ResponseEntity<?> addTicketMessage(

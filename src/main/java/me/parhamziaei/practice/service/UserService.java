@@ -21,7 +21,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.management.relation.RoleNotFoundException;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -68,7 +67,7 @@ public class UserService implements UserDetailsService {
         userRepo.save(user);
     }
 
-    public boolean changePasswordAndGetResult(ChangePasswordRequest cpRequest, String userEmail) {
+    public void changePassword(ChangePasswordRequest cpRequest, String userEmail) {
         if (!cpRequest.getNewPasswordConfirm().equals(cpRequest.getNewPassword())) {
             throw new PasswordPolicyException();
         }
@@ -76,9 +75,8 @@ public class UserService implements UserDetailsService {
         if (passwordEncoder.matches(cpRequest.getOldPassword(), user.getPassword())) {
             user.setPassword(passwordEncoder.encode(cpRequest.getNewPassword()));
             userRepo.update(user);
-            return true;
         } else  {
-            return false;
+            throw new PasswordPolicyException();
         }
     }
 
@@ -136,6 +134,7 @@ public class UserService implements UserDetailsService {
         return user.getRoles();
     }
 
+    @Deprecated
     public Set<Role> addRole(String email, Role role) {
         User user = (User) loadUserByUsername(email);
         user.getRoles().add(role);
@@ -143,6 +142,7 @@ public class UserService implements UserDetailsService {
         return user.getRoles();
     }
 
+    @Deprecated
     public Set<Role> removeRole(String email, Role role) {
         User user = (User) loadUserByUsername(email);
         user.getRoles().remove(role);

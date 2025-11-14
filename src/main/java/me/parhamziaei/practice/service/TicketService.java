@@ -6,10 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import me.parhamziaei.practice.configuration.properties.TicketServiceProperties;
 import me.parhamziaei.practice.dto.internal.ImageInternal;
 import me.parhamziaei.practice.dto.request.query.TicketFilterRequest;
-import me.parhamziaei.practice.dto.request.ticket.TicketAdminRequest;
 import me.parhamziaei.practice.dto.request.ticket.TicketBaseRequest;
+import me.parhamziaei.practice.dto.request.ticket.TicketEditAdminRequest;
 import me.parhamziaei.practice.dto.request.ticket.TicketMessageRequest;
-import me.parhamziaei.practice.dto.request.ticket.TicketUserRequest;
 import me.parhamziaei.practice.dto.response.ticket.*;
 import me.parhamziaei.practice.entity.jpa.*;
 import me.parhamziaei.practice.enums.TicketDepartment;
@@ -27,9 +26,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
+
+// reminder make sure you send an email or sms on each ticket sending or modified phase.
 
 @Slf4j
 @Service
@@ -112,8 +114,8 @@ public class TicketService {
         Pageable pageable = PageRequest.of(filterRequest.getPage(), filterRequest.getSize(), Sort.by(filterRequest.getSortedBy()).ascending());
         Page<Ticket> ticketPage;
 
-        boolean isAllStatus = filterRequest.getStatus().equals("all");
-        boolean isAllDepartment = filterRequest.getDepartment().equals("all");
+        boolean isAllStatus = filterRequest.getStatus() == null;
+        boolean isAllDepartment = filterRequest.getDepartment() == null;
 
         if (isAllStatus && isAllDepartment) {
             ticketPage = ticketRepo.findAll(pageable);
@@ -164,6 +166,22 @@ public class TicketService {
         if (dbTicket.isPresent()) {
             Ticket ticket = dbTicket.get();
             ticket.setStatus(newStatus.value());
+            ticketRepo.update(ticket);
+        }
+    }
+
+    public void editTicket(TicketEditAdminRequest request, Long ticketId) {
+        Optional<Ticket> dbTicket = ticketRepo.findById(ticketId);
+        if (dbTicket.isPresent()) {
+            Ticket ticket = dbTicket.get();
+
+            if (request.getNewSubject() != null)
+                ticket.setSubject(request.getNewSubject());
+            if (request.getNewStatus() != null)
+                ticket.setStatus(request.getNewStatus());
+            if (ticket.getStatus() != null)
+                ticket.setStatus(ticket.getStatus());
+
             ticketRepo.update(ticket);
         }
     }
@@ -243,7 +261,7 @@ public class TicketService {
         if (ticketRequest.getServiceName() != null) {
             //todo make a check if entered service belong to ownerEmail or not, if not throw TicketServiceException()
         }
-        String ticketDepartment = TicketDepartment.validateValue(ticketRequest.getDepartment());
+        String ticketDepartment = ticketRequest.getDepartment();
 
         Ticket ticket = Ticket.builder()
                 .subject(ticketRequest.getSubject())

@@ -3,6 +3,8 @@ package me.parhamziaei.practice.dto.request.ticket;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Data;
+import me.parhamziaei.practice.enums.TicketDepartment;
+import me.parhamziaei.practice.validation.annotation.EnumValue;
 import org.hibernate.validator.constraints.Length;
 
 @Data
@@ -12,7 +14,7 @@ public class TicketAdminRequest implements TicketBaseRequest {
     @Length(min = 5)
     private String subject;
 
-    @NotBlank
+    @EnumValue(enumClass = TicketDepartment.class)
     private String department;
 
     private String serviceName;

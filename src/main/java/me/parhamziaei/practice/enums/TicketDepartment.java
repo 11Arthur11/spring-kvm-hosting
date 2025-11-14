@@ -23,14 +23,6 @@ public enum TicketDepartment {
         return value;
     }
 
-    public static String validateValue(String value) {
-        return Arrays.stream(TicketDepartment.values())
-                .filter(v -> v.value().equals(value))
-                .findFirst()
-                .map(TicketDepartment::value)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Ticket Department value"));
-    }
-
     public static TicketDepartment fromValue(String value) {
         return Arrays.stream(TicketDepartment.values())
                 .filter(v -> v.value().equals(value))
